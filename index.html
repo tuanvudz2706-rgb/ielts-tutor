@@ -150,17 +150,24 @@ const CURRICULUM = [
 // Dùng OpenRouter (free tier). Giữ tên hàm callGemini để không phải sửa hàng trăm chỗ gọi.
 // Free tier: 20 req/phút, 200 req/ngày. Đủ cho 1-2 tiếng học/ngày.
 
-// Danh sách model free theo thứ tự ưu tiên (từ mạnh → yếu để fallback)
+// Danh sách model free theo thứ tự ưu tiên (tự fallback khi provider lỗi)
+const OPENROUTER_FALLBACK_CHAIN = [
+  "meta-llama/llama-3.3-70b-instruct:free",
+  "google/gemma-2-9b-it:free",
+  "mistralai/mistral-7b-instruct:free",
+  "meta-llama/llama-3.2-3b-instruct:free",
+  "qwen/qwen-2.5-7b-instruct:free",
+];
+
 const OPENROUTER_MODELS = {
-  pro: "meta-llama/llama-3.3-70b-instruct:free",      // Tốt nhất cho chấm Writing
-  flash: "meta-llama/llama-3.3-70b-instruct:free",    // Cùng dùng 1 model
-  fallback: "google/gemma-2-9b-it:free",              // Backup khi model chính bận
+  pro: OPENROUTER_FALLBACK_CHAIN[0],
+  flash: OPENROUTER_FALLBACK_CHAIN[0],
+  fallback: OPENROUTER_FALLBACK_CHAIN[1],
 };
 
 async function _callOpenRouterRaw(apiKey, prompt, systemInstruction, jsonMode, modelId) {
   const messages = [];
   if (systemInstruction) messages.push({ role: "system", content: systemInstruction });
-  // Nếu jsonMode, thêm instruction để model trả JSON
   const userContent = jsonMode ? prompt + "\n\nCHỈ TRẢ VỀ JSON THUẦN, KHÔNG MARKDOWN, KHÔNG GIẢI THÍCH THÊM." : prompt;
   messages.push({ role: "user", content: userContent });
   
@@ -185,10 +192,22 @@ async function _callOpenRouterRaw(apiKey, prompt, systemInstruction, jsonMode, m
   
   if (!r.ok) {
     const err = await r.json().catch(() => ({}));
-    throw new Error(err.error?.message || `HTTP ${r.status}: ${r.statusText}`);
+    const msg = err.error?.message || err.message || `HTTP ${r.status}`;
+    const error = new Error(msg);
+    error.status = r.status;
+    error.code = err.error?.code;
+    throw error;
   }
   const data = await r.json();
+  // OpenRouter có thể trả về error trong response body (200 OK nhưng có error)
+  if (data.error) {
+    throw new Error(data.error.message || "Provider error");
+  }
   let text = data.choices?.[0]?.message?.content || "";
+  if (!text && data.choices?.[0]?.finish_reason) {
+    throw new Error(`Model trả về rỗng (reason: ${data.choices[0].finish_reason}). Thử model khác.`);
+  }
+  if (!text) throw new Error("Phản hồi rỗng từ API");
   
   // Clean JSON output nếu model trả kèm markdown fence
   if (jsonMode && text) {
@@ -199,29 +218,26 @@ async function _callOpenRouterRaw(apiKey, prompt, systemInstruction, jsonMode, m
 
 // Giữ tên callGemini để code cũ không vỡ
 async function callGemini(apiKey, prompt, systemInstruction = null, jsonMode = false, forceModel = null) {
-  const userPref = ls.get("modelPref", "auto");
-  const preferredModel = forceModel === "gemini-2.0-flash" ? OPENROUTER_MODELS.flash : OPENROUTER_MODELS.pro;
-  
-  try {
-    const text = await _callOpenRouterRaw(apiKey, prompt, systemInstruction, jsonMode, preferredModel);
-    ls.set("lastModelUsed", preferredModel);
-    return text;
-  } catch (e) {
-    const msg = (e.message || "").toLowerCase();
-    const isRateLimit = msg.includes("rate") || msg.includes("429") || msg.includes("exceed") || msg.includes("quota");
-    // Nếu bị rate limit → thử model fallback
-    if (isRateLimit && preferredModel !== OPENROUTER_MODELS.fallback) {
-      console.warn("Rate limit, thử fallback model");
-      try {
-        const text = await _callOpenRouterRaw(apiKey, prompt, systemInstruction, jsonMode, OPENROUTER_MODELS.fallback);
-        ls.set("lastModelUsed", OPENROUTER_MODELS.fallback);
-        return text;
-      } catch (e2) {
-        throw new Error(`Cả 2 model free đều busy. ${e2.message}`);
+  let lastError = null;
+  // Thử lần lượt các model trong fallback chain
+  for (const model of OPENROUTER_FALLBACK_CHAIN) {
+    try {
+      const text = await _callOpenRouterRaw(apiKey, prompt, systemInstruction, jsonMode, model);
+      ls.set("lastModelUsed", model);
+      return text;
+    } catch (e) {
+      lastError = e;
+      const msg = (e.message || "").toLowerCase();
+      // Authentication errors: không retry, báo ngay
+      if (msg.includes("401") || msg.includes("unauthorized") || msg.includes("invalid api key") || e.status === 401) {
+        throw e;
       }
+      // Các lỗi khác: thử model tiếp theo
+      console.warn(`Model ${model} lỗi, thử model tiếp theo:`, e.message);
+      continue;
     }
-    throw e;
   }
+  throw new Error(`Tất cả model free đều lỗi. Lỗi cuối: ${lastError?.message}`);
 }
 
 const CO_MINH_SYSTEM = `Bạn là "Cô Minh" — giáo viên IELTS người Việt với 10 năm kinh nghiệm, chuyên dạy từ mất gốc lên band 6.0.
@@ -437,19 +453,29 @@ function SetupScreen({ onSave }) {
     }
     setLoading(true); setErr("");
     try {
-      await callGemini(k, "Say OK");
+      // Test key bằng endpoint auth/key (không gọi model, không bị lỗi provider)
+      const r = await fetch("https://openrouter.ai/api/v1/auth/key", {
+        method: "GET",
+        headers: { "Authorization": `Bearer ${k}` }
+      });
+      if (!r.ok) {
+        if (r.status === 401) throw new Error("Key không hợp lệ hoặc bị revoke");
+        throw new Error(`HTTP ${r.status}`);
+      }
+      const data = await r.json();
+      // Key OK, lưu và vào app
       onSave(k);
     } catch (e) {
       const msg = (e.message || "").toLowerCase();
       let friendly = "";
-      if (msg.includes("401") || msg.includes("unauthorized") || msg.includes("invalid")) {
-        friendly = "❌ Key không hợp lệ. Kiểm tra:\n• Đã copy đủ key chưa\n• Key có bị revoke không\n→ Tạo key mới tại openrouter.ai/keys";
-      } else if (msg.includes("429") || msg.includes("rate") || msg.includes("quota")) {
-        friendly = "⏰ Đã vượt rate limit (20 req/phút). Đợi 1 phút rồi thử lại.";
-      } else if (msg.includes("fetch") || msg.includes("network")) {
-        friendly = "📡 Không kết nối được OpenRouter. Kiểm tra mạng internet.";
+      if (msg.includes("401") || msg.includes("unauthorized") || msg.includes("invalid") || msg.includes("revoke")) {
+        friendly = "❌ Key không hợp lệ. Kiểm tra:\n• Đã copy đủ key chưa (khoảng 73 ký tự)\n• Có space thừa ở đầu/cuối không\n• Key có bị xóa ở openrouter.ai/keys không\n→ Tạo key mới tại openrouter.ai/keys";
+      } else if (msg.includes("fetch") || msg.includes("network") || msg.includes("failed to fetch")) {
+        friendly = "📡 Không kết nối được OpenRouter. Kiểm tra mạng internet hoặc thử đổi WiFi.";
+      } else if (msg.includes("cors")) {
+        friendly = "🔒 Trình duyệt chặn. Thử dùng Chrome/Edge mới nhất.";
       } else {
-        friendly = "Lỗi: " + e.message;
+        friendly = "Lỗi: " + e.message + "\n\nCopy lỗi này và báo Claude nếu cần hỗ trợ.";
       }
       setErr(friendly);
       setLoading(false);
