@@ -146,42 +146,79 @@ const CURRICULUM = [
   { id:"u7", band:"6.0", name:"AI tạo bài mới", icon:"✨", color:"#BE185D", isAI:true, lessons:[] },
 ];
 
-// ============ GEMINI API ============
-// Dùng Pro mặc định (chất lượng cao). Tự fallback Flash khi hết quota Pro (50/ngày).
-async function _callGeminiRaw(apiKey, prompt, systemInstruction, jsonMode, modelId) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`;
+// ============ OPENROUTER API ============
+// Dùng OpenRouter (free tier). Giữ tên hàm callGemini để không phải sửa hàng trăm chỗ gọi.
+// Free tier: 20 req/phút, 200 req/ngày. Đủ cho 1-2 tiếng học/ngày.
+
+// Danh sách model free theo thứ tự ưu tiên (từ mạnh → yếu để fallback)
+const OPENROUTER_MODELS = {
+  pro: "meta-llama/llama-3.3-70b-instruct:free",      // Tốt nhất cho chấm Writing
+  flash: "meta-llama/llama-3.3-70b-instruct:free",    // Cùng dùng 1 model
+  fallback: "google/gemma-2-9b-it:free",              // Backup khi model chính bận
+};
+
+async function _callOpenRouterRaw(apiKey, prompt, systemInstruction, jsonMode, modelId) {
+  const messages = [];
+  if (systemInstruction) messages.push({ role: "system", content: systemInstruction });
+  // Nếu jsonMode, thêm instruction để model trả JSON
+  const userContent = jsonMode ? prompt + "\n\nCHỈ TRẢ VỀ JSON THUẦN, KHÔNG MARKDOWN, KHÔNG GIẢI THÍCH THÊM." : prompt;
+  messages.push({ role: "user", content: userContent });
+  
   const body = {
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
-    generationConfig: { temperature: 0.4, maxOutputTokens: 4096 }
+    model: modelId,
+    messages,
+    temperature: 0.7,
+    max_tokens: 4096,
   };
-  if (systemInstruction) body.systemInstruction = { parts: [{ text: systemInstruction }] };
-  if (jsonMode) body.generationConfig.responseMimeType = "application/json";
-  const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (jsonMode) body.response_format = { type: "json_object" };
+  
+  const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+      "HTTP-Referer": window.location.origin,
+      "X-Title": "IELTS Tutor",
+    },
+    body: JSON.stringify(body)
+  });
+  
   if (!r.ok) {
     const err = await r.json().catch(() => ({}));
-    throw new Error(err.error?.message || `HTTP ${r.status}`);
+    throw new Error(err.error?.message || `HTTP ${r.status}: ${r.statusText}`);
   }
   const data = await r.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  let text = data.choices?.[0]?.message?.content || "";
+  
+  // Clean JSON output nếu model trả kèm markdown fence
+  if (jsonMode && text) {
+    text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "").trim();
+  }
+  return text;
 }
 
+// Giữ tên callGemini để code cũ không vỡ
 async function callGemini(apiKey, prompt, systemInstruction = null, jsonMode = false, forceModel = null) {
-  // Ưu tiên Pro; nếu hết quota thì tự rơi về Flash
-  const userPref = ls.get("modelPref", "auto"); // auto | pro | flash
-  const preferredModel = forceModel || (userPref === "flash" ? "gemini-2.0-flash" : "gemini-2.5-pro");
+  const userPref = ls.get("modelPref", "auto");
+  const preferredModel = forceModel === "gemini-2.0-flash" ? OPENROUTER_MODELS.flash : OPENROUTER_MODELS.pro;
+  
   try {
-    const text = await _callGeminiRaw(apiKey, prompt, systemInstruction, jsonMode, preferredModel);
+    const text = await _callOpenRouterRaw(apiKey, prompt, systemInstruction, jsonMode, preferredModel);
     ls.set("lastModelUsed", preferredModel);
     return text;
   } catch (e) {
     const msg = (e.message || "").toLowerCase();
-    const isQuota = msg.includes("quota") || msg.includes("resource") || msg.includes("rate") || msg.includes("429") || msg.includes("exceed");
-    if (isQuota && preferredModel === "gemini-2.5-pro") {
-      console.warn("Pro quota hết, rơi về Flash");
-      ls.set("proQuotaExceededAt", Date.now());
-      const text = await _callGeminiRaw(apiKey, prompt, systemInstruction, jsonMode, "gemini-2.0-flash");
-      ls.set("lastModelUsed", "gemini-2.0-flash");
-      return text;
+    const isRateLimit = msg.includes("rate") || msg.includes("429") || msg.includes("exceed") || msg.includes("quota");
+    // Nếu bị rate limit → thử model fallback
+    if (isRateLimit && preferredModel !== OPENROUTER_MODELS.fallback) {
+      console.warn("Rate limit, thử fallback model");
+      try {
+        const text = await _callOpenRouterRaw(apiKey, prompt, systemInstruction, jsonMode, OPENROUTER_MODELS.fallback);
+        ls.set("lastModelUsed", OPENROUTER_MODELS.fallback);
+        return text;
+      } catch (e2) {
+        throw new Error(`Cả 2 model free đều busy. ${e2.message}`);
+      }
     }
     throw e;
   }
@@ -393,11 +430,30 @@ function SetupScreen({ onSave }) {
   const [loading, setLoading] = useState(false);
   const test = async () => {
     if (!key.trim()) { setErr("Nhập API key vào"); return; }
+    const k = key.trim();
+    if (!k.startsWith("sk-or-")) {
+      setErr("Key không đúng định dạng. OpenRouter key phải bắt đầu bằng 'sk-or-v1-'. Bạn có paste nhầm key Gemini không?");
+      return;
+    }
     setLoading(true); setErr("");
     try {
-      await callGemini(key, "Trả lời ngắn: 'OK'");
-      onSave(key.trim());
-    } catch (e) { setErr("API key không hợp lệ: " + e.message); setLoading(false); }
+      await callGemini(k, "Say OK");
+      onSave(k);
+    } catch (e) {
+      const msg = (e.message || "").toLowerCase();
+      let friendly = "";
+      if (msg.includes("401") || msg.includes("unauthorized") || msg.includes("invalid")) {
+        friendly = "❌ Key không hợp lệ. Kiểm tra:\n• Đã copy đủ key chưa\n• Key có bị revoke không\n→ Tạo key mới tại openrouter.ai/keys";
+      } else if (msg.includes("429") || msg.includes("rate") || msg.includes("quota")) {
+        friendly = "⏰ Đã vượt rate limit (20 req/phút). Đợi 1 phút rồi thử lại.";
+      } else if (msg.includes("fetch") || msg.includes("network")) {
+        friendly = "📡 Không kết nối được OpenRouter. Kiểm tra mạng internet.";
+      } else {
+        friendly = "Lỗi: " + e.message;
+      }
+      setErr(friendly);
+      setLoading(false);
+    }
   };
   return (
     <div className="paper-bg min-h-screen flex items-center justify-center p-6"><div className="paper-tex min-h-screen w-full flex items-center justify-center">
@@ -409,15 +465,25 @@ function SetupScreen({ onSave }) {
           <p className="font-display italic text-stone-600">Giáo viên IELTS cá nhân của bạn</p>
         </div>
         <div className="bg-white border border-stone-200 rounded-sm p-6 ink-shadow">
-          <h2 className="font-display text-xl font-bold mb-3">Nhập Gemini API Key</h2>
-          <p className="text-sm text-stone-600 mb-4">Key miễn phí tại <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" className="text-amber-700 underline">aistudio.google.com/apikey</a>. Key lưu trong trình duyệt, không gửi đi đâu khác.</p>
-          <input type="password" value={key} onChange={e => setKey(e.target.value)} placeholder="AIzaSy..." className="w-full px-4 py-3 border border-stone-300 rounded-sm font-mono text-sm mb-3 focus:outline-none focus:border-stone-700" />
-          {err && <p className="text-rose-700 text-sm mb-3">{err}</p>}
+          <h2 className="font-display text-xl font-bold mb-3">Nhập OpenRouter API Key</h2>
+          <p className="text-sm text-stone-600 mb-4">Key miễn phí tại <a href="https://openrouter.ai/keys" target="_blank" rel="noopener" className="text-amber-700 underline">openrouter.ai/keys</a>. Key lưu trong trình duyệt, không gửi đi đâu khác.</p>
+          <details className="mb-4 text-sm">
+            <summary className="cursor-pointer text-stone-700 font-bold">📖 Hướng dẫn lấy key (2 phút)</summary>
+            <ol className="list-decimal list-inside mt-2 text-stone-600 space-y-1 text-xs">
+              <li>Vào <span className="text-amber-700 underline">openrouter.ai</span> và bấm "Sign in" (đăng nhập bằng Google/GitHub)</li>
+              <li>Sau khi login, vào <span className="text-amber-700 underline">openrouter.ai/keys</span></li>
+              <li>Bấm nút "Create Key" → đặt tên "IELTS Tutor" → Create</li>
+              <li>Copy key (bắt đầu bằng <code>sk-or-v1-...</code>)</li>
+              <li>Paste vào ô dưới và bấm Kiểm tra</li>
+            </ol>
+          </details>
+          <input type="password" value={key} onChange={e => setKey(e.target.value)} placeholder="sk-or-v1-..." className="w-full px-4 py-3 border border-stone-300 rounded-sm font-mono text-sm mb-3 focus:outline-none focus:border-stone-700" />
+          {err && <p className="text-rose-700 text-sm mb-3" style={{whiteSpace:"pre-wrap"}}>{err}</p>}
           <button onClick={test} disabled={loading} className="w-full bg-stone-900 text-amber-50 py-3 rounded-sm font-display font-bold hover:bg-stone-800 disabled:opacity-50">
             {loading ? "Đang kiểm tra..." : "Kiểm tra & Bắt đầu"}
           </button>
         </div>
-        <p className="text-xs text-stone-500 text-center mt-4 italic">Gemini miễn phí 1,500 lượt/ngày — dư cho 1 tiếng học/ngày</p>
+        <p className="text-xs text-stone-500 text-center mt-4 italic">OpenRouter free tier: 200 lượt/ngày · Llama 3.3 70B · không cần thẻ tín dụng</p>
       </div>
     </div></div>
   );
@@ -1259,7 +1325,7 @@ Trả về JSON đúng format này:
       <p className="text-stone-500 text-sm mb-2">AI chấm theo 4 tiêu chí Cambridge</p>
       <div className="inline-flex items-center gap-2 text-xs bg-stone-900 text-amber-50 px-3 py-1 rounded-sm mb-8">
         <Icon name="sparkle" className="w-3 h-3" />
-        <span>Gemini 2.5 Pro · 50 bài/ngày miễn phí</span>
+        <span>OpenRouter · Llama 3.3 70B free</span>
       </div>
 
       {!prompt && (
@@ -1289,7 +1355,7 @@ Trả về JSON đúng format này:
       {result && (
         <div className="slide-up">
           <div className="bg-stone-900 text-amber-50 p-8 rounded-sm ink-shadow mb-4 text-center relative overflow-hidden">
-            <div className="absolute top-2 right-3 text-[10px] tracking-widest uppercase text-amber-400/50">Gemini 2.5 Pro</div>
+            <div className="absolute top-2 right-3 text-[10px] tracking-widest uppercase text-amber-400/50">OpenRouter</div>
             <p className="text-xs tracking-[0.3em] uppercase text-amber-400/70 mb-2">Band Overall</p>
             <div className="font-display text-7xl font-black">{result.overall_band}</div>
             {result.word_count_ok === false && <p className="text-rose-300 text-xs mt-2">⚠ Dưới 250 từ — band bị trừ</p>}
@@ -1470,7 +1536,7 @@ Tag cụ thể: grammar_tense, grammar_prep, grammar_article, grammar_conditiona
     <div className="max-w-xl mx-auto px-6 pt-10">
       <button onClick={onBack} className="mb-6 text-stone-500 flex items-center gap-1 text-sm"><Icon name="chevLeft" className="w-4 h-4" /> Trang chính</button>
       <h1 className="font-display text-4xl font-black mb-2">Bài học AI tạo</h1>
-      <p className="text-stone-500 text-sm mb-6">Band {profile.currentBand} · Gemini 2.5 Pro</p>
+      <p className="text-stone-500 text-sm mb-6">Band {profile.currentBand} · OpenRouter Free</p>
 
       {weaknesses.length > 0 && (
         <div className="bg-amber-50 border border-amber-200 rounded-sm p-3 mb-6">
@@ -1851,7 +1917,7 @@ Trả về JSON:
             </button>
           )}
         </div>
-        <p className="text-stone-500 text-sm mb-8">Học từ vựng qua chuyện ngắn · Gemini 2.5 Pro</p>
+        <p className="text-stone-500 text-sm mb-8">Học từ vựng qua chuyện ngắn · OpenRouter Free</p>
 
         <p className="text-xs uppercase tracking-widest text-stone-500 mb-2">Loại chuyện</p>
         <div className="grid grid-cols-2 gap-2 mb-6">
@@ -2184,7 +2250,7 @@ function SettingsScreen({ apiKey, onSaveKey, profile, onSaveProfile, onBack }) {
       <button onClick={onBack} className="mb-6 text-stone-500 flex items-center gap-1 text-sm"><Icon name="chevLeft" className="w-4 h-4" /> Trang chính</button>
       <h1 className="font-display text-4xl font-black mb-8">Cài đặt</h1>
       <div className="bg-white border border-stone-200 rounded-sm p-5 ink-shadow mb-4">
-        <label className="text-xs tracking-widest uppercase text-stone-500">Gemini API Key</label>
+        <label className="text-xs tracking-widest uppercase text-stone-500">OpenRouter API Key</label>
         <input type="password" value={key} onChange={e => setKey(e.target.value)} className="w-full px-3 py-2 border border-stone-300 rounded-sm font-mono text-sm mt-2 mb-2" />
         <button onClick={() => { onSaveKey(key); alert("Đã lưu"); }} className="bg-stone-900 text-amber-50 px-4 py-2 rounded-sm text-sm">Lưu</button>
       </div>
