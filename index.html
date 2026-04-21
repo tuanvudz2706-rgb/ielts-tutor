@@ -1,0 +1,2241 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cô Minh — IELTS Tutor</title>
+<meta name="description" content="AI giáo viên IELTS cá nhân — học IPA, từ vựng, Writing mỗi ngày">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body { font-family: 'Work Sans', system-ui, sans-serif; background: #FAF7F0; color: #1C1917; }
+  .font-display { font-family: 'Fraunces', Georgia, serif; }
+  .paper-bg { background-color: #FAF7F0; background-image: radial-gradient(circle at 25% 10%, rgba(180,83,9,0.04) 0%, transparent 50%), radial-gradient(circle at 85% 80%, rgba(45,95,63,0.05) 0%, transparent 50%); }
+  .paper-tex { background-image: repeating-linear-gradient(90deg, transparent, transparent 24px, rgba(120,113,108,0.04) 24px, rgba(120,113,108,0.04) 25px); }
+  .ink-shadow { box-shadow: 0 1px 0 rgba(0,0,0,0.04), 0 2px 4px rgba(68,64,60,0.08), 0 8px 24px -8px rgba(68,64,60,0.1); }
+  @keyframes dip { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
+  .float-gentle { animation: dip 3s ease-in-out infinite; }
+  @keyframes slide-up { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  .slide-up { animation: slide-up 0.4s ease-out backwards; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spin { animation: spin 1s linear infinite; }
+  .typing::after { content: '▋'; animation: blink 1s infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  /* SVG illustration từ AI - fit vào container */
+  [dangerouslySetInnerHTML] svg, .story-svg svg { width: 100%; height: 100%; max-height: 240px; display: block; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef } = React;
+
+// ============ DATA ============
+const CURRICULUM = [
+  { id:"u1", band:"3.0", name:"Phụ âm cơ bản", icon:"🔤", color:"#2D5F3F",
+    lessons:[
+      { id:"u1l1", title:"Phụ âm dễ: /p/ /b/ /t/ /d/", type:"ipa", items:[
+        {en:"pen",ipa:"/pen/",options:["/pen/","/ben/","/ten/","/den/"]},
+        {en:"big",ipa:"/bɪɡ/",options:["/bɪɡ/","/pɪɡ/","/tɪɡ/","/dɪɡ/"]},
+        {en:"top",ipa:"/tɒp/",options:["/tɒp/","/dɒp/","/pɒp/","/bɒp/"]},
+        {en:"dog",ipa:"/dɒɡ/",options:["/dɒɡ/","/tɒɡ/","/bɒɡ/","/pɒɡ/"]},
+        {en:"book",ipa:"/bʊk/",options:["/bʊk/","/pʊk/","/dʊk/","/tʊk/"]},
+      ]},
+      { id:"u1l2", title:"Phụ âm khó: /θ/ /ð/ /ʃ/", type:"ipa", items:[
+        {en:"think",ipa:"/θɪŋk/",options:["/θɪŋk/","/sɪŋk/","/tɪŋk/","/fɪŋk/"]},
+        {en:"this",ipa:"/ðɪs/",options:["/ðɪs/","/zɪs/","/dɪs/","/vɪs/"]},
+        {en:"ship",ipa:"/ʃɪp/",options:["/ʃɪp/","/sɪp/","/tʃɪp/","/dʒɪp/"]},
+        {en:"three",ipa:"/θriː/",options:["/θriː/","/sriː/","/friː/","/triː/"]},
+        {en:"mother",ipa:"/ˈmʌðə/",options:["/ˈmʌðə/","/ˈmʌzə/","/ˈmʌdə/","/ˈmʌvə/"]},
+      ]},
+      { id:"u1l3", title:"Minimal pairs: /θ/ vs /s/", type:"pairs", items:[
+        {target:"think",distractor:"sink"},
+        {target:"thick",distractor:"sick"},
+        {target:"thing",distractor:"sing"},
+        {target:"thought",distractor:"sort"},
+        {target:"mouth",distractor:"mouse"},
+      ]},
+    ]
+  },
+  { id:"u2", band:"3.5", name:"Nguyên âm ngắn", icon:"🎵", color:"#0F766E",
+    lessons:[
+      { id:"u2l1", title:"/ɪ/ /e/ /æ/", type:"ipa", items:[
+        {en:"sit",ipa:"/sɪt/",options:["/sɪt/","/set/","/sæt/","/siːt/"]},
+        {en:"bed",ipa:"/bed/",options:["/bed/","/bɪd/","/bæd/","/biːd/"]},
+        {en:"cat",ipa:"/kæt/",options:["/kæt/","/ket/","/kɪt/","/kɒt/"]},
+        {en:"pen",ipa:"/pen/",options:["/pen/","/pɪn/","/pæn/","/piːn/"]},
+        {en:"bag",ipa:"/bæɡ/",options:["/bæɡ/","/beɡ/","/bɪɡ/","/biːɡ/"]},
+      ]},
+      { id:"u2l2", title:"Minimal pairs: /ɪ/ vs /iː/", type:"pairs", items:[
+        {target:"ship",distractor:"sheep"},
+        {target:"bit",distractor:"beat"},
+        {target:"fit",distractor:"feet"},
+        {target:"live",distractor:"leave"},
+        {target:"sit",distractor:"seat"},
+      ]},
+      { id:"u2l3", title:"Minimal pairs: /æ/ vs /e/", type:"pairs", items:[
+        {target:"bad",distractor:"bed"},
+        {target:"man",distractor:"men"},
+        {target:"had",distractor:"head"},
+        {target:"sat",distractor:"set"},
+        {target:"sand",distractor:"send"},
+      ]},
+    ]
+  },
+  { id:"u3", band:"4.0", name:"Nguyên âm dài & đôi", icon:"🌊", color:"#B45309",
+    lessons:[
+      { id:"u3l1", title:"/iː/ /uː/ /ɑː/ /ɔː/", type:"ipa", items:[
+        {en:"see",ipa:"/siː/",options:["/siː/","/sɪ/","/seɪ/","/saɪ/"]},
+        {en:"food",ipa:"/fuːd/",options:["/fuːd/","/fʊd/","/fəʊd/","/foʊd/"]},
+        {en:"car",ipa:"/kɑː/",options:["/kɑː/","/kæ/","/kɔː/","/kʌ/"]},
+        {en:"door",ipa:"/dɔː/",options:["/dɔː/","/dɒ/","/dʊə/","/dəʊ/"]},
+        {en:"tree",ipa:"/triː/",options:["/triː/","/trɪ/","/treɪ/","/traɪ/"]},
+      ]},
+      { id:"u3l2", title:"Diphthongs: /eɪ/ /aɪ/ /əʊ/", type:"ipa", items:[
+        {en:"day",ipa:"/deɪ/",options:["/deɪ/","/daɪ/","/diː/","/dəʊ/"]},
+        {en:"time",ipa:"/taɪm/",options:["/taɪm/","/teɪm/","/tiːm/","/təʊm/"]},
+        {en:"go",ipa:"/ɡəʊ/",options:["/ɡəʊ/","/ɡaʊ/","/ɡɔː/","/ɡuː/"]},
+        {en:"rain",ipa:"/reɪn/",options:["/reɪn/","/raɪn/","/riːn/","/rʌn/"]},
+        {en:"home",ipa:"/həʊm/",options:["/həʊm/","/haʊm/","/hʌm/","/hɔːm/"]},
+      ]},
+    ]
+  },
+  { id:"u4", band:"4.5", name:"Trọng âm từ", icon:"⚡", color:"#7C2D12",
+    lessons:[
+      { id:"u4l1", title:"Trọng âm 2 âm tiết", type:"stress", items:[
+        {word:"happy",correct:0,syllables:["hap","py"]},
+        {word:"before",correct:1,syllables:["be","fore"]},
+        {word:"table",correct:0,syllables:["ta","ble"]},
+        {word:"about",correct:1,syllables:["a","bout"]},
+        {word:"mother",correct:0,syllables:["mo","ther"]},
+      ]},
+      { id:"u4l2", title:"Trọng âm 3 âm tiết", type:"stress", items:[
+        {word:"beautiful",correct:0,syllables:["beau","ti","ful"]},
+        {word:"example",correct:1,syllables:["ex","am","ple"]},
+        {word:"understand",correct:2,syllables:["un","der","stand"]},
+        {word:"computer",correct:1,syllables:["com","pu","ter"]},
+        {word:"important",correct:1,syllables:["im","por","tant"]},
+      ]},
+    ]
+  },
+  { id:"u5", band:"5.0", name:"Từ vựng IELTS", icon:"📚", color:"#1E40AF",
+    lessons:[
+      { id:"u5l1", title:"Environment", type:"vocab", items:[
+        {en:"pollution",ipa:"/pəˈluːʃən/",vi:"sự ô nhiễm",options:["sự ô nhiễm","sự bảo vệ","sự phát triển","sự tiêu thụ"]},
+        {en:"sustainable",ipa:"/səˈsteɪnəbl/",vi:"bền vững",options:["bền vững","tạm thời","nhanh chóng","mạnh mẽ"]},
+        {en:"deforestation",ipa:"/diːˌfɒrɪˈsteɪʃən/",vi:"nạn phá rừng",options:["nạn phá rừng","nạn hạn hán","nạn đói","nạn cháy"]},
+        {en:"emission",ipa:"/ɪˈmɪʃən/",vi:"sự phát thải",options:["sự phát thải","sự tiếp nhận","sự tăng trưởng","sự suy giảm"]},
+        {en:"biodiversity",ipa:"/ˌbaɪəʊdaɪˈvɜːsɪti/",vi:"đa dạng sinh học",options:["đa dạng sinh học","sinh học phân tử","hóa sinh","địa chất"]},
+      ]},
+      { id:"u5l2", title:"Education", type:"vocab", items:[
+        {en:"curriculum",ipa:"/kəˈrɪkjələm/",vi:"chương trình học",options:["chương trình học","kỳ thi","học phí","chứng chỉ"]},
+        {en:"literacy",ipa:"/ˈlɪtərəsi/",vi:"khả năng đọc viết",options:["khả năng đọc viết","khả năng tính toán","khả năng vận động","khả năng sáng tạo"]},
+        {en:"scholarship",ipa:"/ˈskɒləʃɪp/",vi:"học bổng",options:["học bổng","học phí","bằng cấp","kỳ nghỉ"]},
+        {en:"tuition",ipa:"/tjuˈɪʃən/",vi:"học phí",options:["học phí","học bổng","giảng dạy","lớp học"]},
+        {en:"enrollment",ipa:"/ɪnˈrəʊlmənt/",vi:"sự ghi danh",options:["sự ghi danh","sự tốt nghiệp","sự thi cử","sự bỏ học"]},
+      ]},
+    ]
+  },
+  { id:"u6", band:"5.5", name:"Writing Task 2", icon:"✍️", color:"#6D28D9", isWriting:true, lessons:[] },
+  { id:"u7", band:"6.0", name:"AI tạo bài mới", icon:"✨", color:"#BE185D", isAI:true, lessons:[] },
+];
+
+// ============ GEMINI API ============
+// Dùng Pro mặc định (chất lượng cao). Tự fallback Flash khi hết quota Pro (50/ngày).
+async function _callGeminiRaw(apiKey, prompt, systemInstruction, jsonMode, modelId) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`;
+  const body = {
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    generationConfig: { temperature: 0.4, maxOutputTokens: 4096 }
+  };
+  if (systemInstruction) body.systemInstruction = { parts: [{ text: systemInstruction }] };
+  if (jsonMode) body.generationConfig.responseMimeType = "application/json";
+  const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    throw new Error(err.error?.message || `HTTP ${r.status}`);
+  }
+  const data = await r.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+}
+
+async function callGemini(apiKey, prompt, systemInstruction = null, jsonMode = false, forceModel = null) {
+  // Ưu tiên Pro; nếu hết quota thì tự rơi về Flash
+  const userPref = ls.get("modelPref", "auto"); // auto | pro | flash
+  const preferredModel = forceModel || (userPref === "flash" ? "gemini-2.0-flash" : "gemini-2.5-pro");
+  try {
+    const text = await _callGeminiRaw(apiKey, prompt, systemInstruction, jsonMode, preferredModel);
+    ls.set("lastModelUsed", preferredModel);
+    return text;
+  } catch (e) {
+    const msg = (e.message || "").toLowerCase();
+    const isQuota = msg.includes("quota") || msg.includes("resource") || msg.includes("rate") || msg.includes("429") || msg.includes("exceed");
+    if (isQuota && preferredModel === "gemini-2.5-pro") {
+      console.warn("Pro quota hết, rơi về Flash");
+      ls.set("proQuotaExceededAt", Date.now());
+      const text = await _callGeminiRaw(apiKey, prompt, systemInstruction, jsonMode, "gemini-2.0-flash");
+      ls.set("lastModelUsed", "gemini-2.0-flash");
+      return text;
+    }
+    throw e;
+  }
+}
+
+const CO_MINH_SYSTEM = `Bạn là "Cô Minh" — giáo viên IELTS người Việt với 10 năm kinh nghiệm, chuyên dạy từ mất gốc lên band 6.0.
+
+NGUYÊN TẮC:
+- Thân thiện, khuyến khích, kiên nhẫn
+- Giải thích ngữ pháp và từ vựng bằng tiếng Việt; ví dụ bằng tiếng Anh
+- Khi học viên sai, giải thích LÝ DO sai, không chỉ đưa đáp án
+- Câu trả lời ngắn gọn (tối đa 3 đoạn), tập trung vào 1 điểm học
+- Dùng emoji một cách tiết chế để tạo không khí thân thiện
+- Luôn khép lại bằng câu hỏi hoặc bài tập nhỏ để học viên suy nghĩ tiếp`;
+
+// ============ SPEECH ============
+const speak = (text, rate = 0.9) => {
+  try {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-GB"; u.rate = rate;
+    const voices = window.speechSynthesis.getVoices();
+    const en = voices.find(v => v.lang.startsWith("en-GB")) || voices.find(v => v.lang.startsWith("en"));
+    if (en) u.voice = en;
+    window.speechSynthesis.speak(u);
+  } catch(e) {}
+};
+
+// ============ STORAGE ============
+const ls = {
+  get: (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+
+// ============ ICONS (inline SVG) ============
+const Icon = ({ name, className = "w-5 h-5" }) => {
+  const icons = {
+    flame: <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>,
+    star: <polygon points="12,2 15,8.5 22,9.3 17,14 18.2,21 12,17.8 5.8,21 7,14 2,9.3 9,8.5"/>,
+    heart: <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>,
+    check: <polyline points="20 6 9 17 4 12"/>,
+    x: <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,
+    chevLeft: <polyline points="15 18 9 12 15 6"/>,
+    chevRight: <polyline points="9 18 15 12 9 6"/>,
+    lock: <><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>,
+    play: <polygon points="5 3 19 12 5 21"/>,
+    volume: <><polygon points="11 5 6 9 2 9 2 15 6 15 11 19"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></>,
+    home: <><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>,
+    layers: <><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></>,
+    chat: <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>,
+    pen: <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>,
+    rotate: <><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></>,
+    bar: <><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></>,
+    trophy: <><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></>,
+    sparkle: <path d="M12 3l2.5 7.5L22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-1.5z"/>,
+    send: <><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9"/></>,
+    mic: <><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></>,
+    key: <><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></>,
+  };
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      {icons[name]}
+    </svg>
+  );
+};
+
+// ============ MAIN APP ============
+function App() {
+  const [screen, setScreen] = useState("home");
+  const [apiKey, setApiKey] = useState("");
+  const [profile, setProfile] = useState({ xp:0, streak:0, hearts:5, lastActive:null, currentBand:"3.0", completedLessons:{}, name:"" });
+  const [flashcards, setFlashcards] = useState([]);
+  const [currentLesson, setCurrentLesson] = useState(null);
+  const [chatHistory, setChatHistory] = useState([]);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    const k = ls.get("apiKey", "");
+    const p = ls.get("profile", { xp:0, streak:0, hearts:5, lastActive:null, currentBand:"3.0", completedLessons:{}, name:"" });
+    const f = ls.get("flashcards", []);
+    const ch = ls.get("chatHistory", []);
+    const today = new Date().toDateString();
+    if (p.lastActive !== today) p.hearts = Math.min(5, p.hearts + 1);
+    setApiKey(k);
+    setProfile(p);
+    setFlashcards(f);
+    setChatHistory(ch);
+    setLoaded(true);
+  }, []);
+
+  const saveProfile = (patch) => {
+    const newP = { ...profile, ...patch, lastActive: new Date().toDateString() };
+    setProfile(newP);
+    ls.set("profile", newP);
+  };
+
+  const saveFlashcards = (cards) => {
+    setFlashcards(cards);
+    ls.set("flashcards", cards);
+  };
+
+  const saveChat = (h) => {
+    setChatHistory(h);
+    ls.set("chatHistory", h);
+  };
+
+  const saveApiKey = (k) => {
+    setApiKey(k);
+    ls.set("apiKey", k);
+  };
+
+  const completeLesson = (lessonId, score, mistakes, itemStats = []) => {
+    const prev = profile.completedLessons[lessonId] || { best:0, attempts:0 };
+    const today = new Date().toDateString();
+    const yesterday = new Date(Date.now()-86400000).toDateString();
+    const newStreak = profile.lastActive === today ? profile.streak
+      : (profile.lastActive === yesterday || !profile.lastActive ? profile.streak + 1 : 1);
+    
+    // Aggregate stats by tag
+    const tagStats = { ...(profile.tagStats || {}) };
+    itemStats.forEach(s => {
+      const t = s.tag || "unknown";
+      if (!tagStats[t]) tagStats[t] = { attempts: 0, correctSum: 0, lastSeen: today };
+      tagStats[t].attempts += 1;
+      tagStats[t].correctSum += s.partial; // partial score 0-100
+      tagStats[t].lastSeen = today;
+    });
+    
+    // Daily log
+    const dailyLog = { ...(profile.dailyLog || {}) };
+    if (!dailyLog[today]) dailyLog[today] = { lessons: 0, avgScore: 0, items: 0, totalScore: 0 };
+    dailyLog[today].lessons += 1;
+    dailyLog[today].items += itemStats.length;
+    dailyLog[today].totalScore += itemStats.reduce((s, i) => s + i.partial, 0);
+    dailyLog[today].avgScore = Math.round(dailyLog[today].totalScore / Math.max(1, dailyLog[today].items));
+    
+    saveProfile({
+      xp: profile.xp + Math.round(score * 0.3),
+      completedLessons: { ...profile.completedLessons, [lessonId]: { best: Math.max(prev.best, score), attempts: prev.attempts+1, lastDate: today } },
+      streak: newStreak,
+      tagStats,
+      dailyLog,
+    });
+    // add mistakes as flashcards
+    const existing = new Set(flashcards.map(c => c.front));
+    const newCards = mistakes.filter(m => !existing.has(m.front))
+      .map(m => ({ ...m, id: Date.now()+Math.random(), nextDue: Date.now(), interval: 1, ease: 2.5, reps: 0 }));
+    if (newCards.length) saveFlashcards([...flashcards, ...newCards]);
+  };
+
+  const addFlashcard = (card) => {
+    if (!card || !card.front) return;
+    if (flashcards.find(c => c.front === card.front)) return; // đã tồn tại
+    const newCard = { ...card, id: Date.now()+Math.random(), nextDue: Date.now(), interval: 1, ease: 2.5, reps: 0 };
+    saveFlashcards([...flashcards, newCard]);
+  };
+
+  // Calculate top weaknesses from tagStats (tags with lowest accuracy, min 5 attempts)
+  const weaknesses = (() => {
+    const ts = profile.tagStats || {};
+    return Object.entries(ts)
+      .filter(([_, v]) => v.attempts >= 5)
+      .map(([tag, v]) => ({ tag, acc: Math.round(v.correctSum / v.attempts), attempts: v.attempts }))
+      .sort((a, b) => a.acc - b.acc)
+      .slice(0, 5);
+  })();
+
+  const reviewCard = (cardId, grade) => {
+    const newCards = flashcards.map(c => {
+      if (c.id !== cardId) return c;
+      let { interval, ease, reps } = c;
+      if (grade === 0) { interval = 1; reps = 0; ease = Math.max(1.3, ease - 0.2); }
+      else if (grade === 1) { interval = Math.max(1, Math.round(interval * 1.2)); ease = Math.max(1.3, ease - 0.1); reps++; }
+      else if (grade === 2) { interval = reps === 0 ? 1 : Math.round(interval * ease); reps++; }
+      else { interval = reps === 0 ? 4 : Math.round(interval * ease * 1.3); ease += 0.1; reps++; }
+      return { ...c, interval, ease, reps, nextDue: Date.now() + interval * 86400000 };
+    });
+    saveFlashcards(newCards);
+  };
+
+  if (!loaded) return <div className="paper-bg min-h-screen flex items-center justify-center"><div className="font-display italic text-stone-600">Đang mở giáo trình...</div></div>;
+
+  if (!apiKey) return <SetupScreen onSave={saveApiKey} />;
+
+  const due = flashcards.filter(c => c.nextDue <= Date.now());
+
+  return (
+    <div className="paper-bg min-h-screen"><div className="paper-tex min-h-screen pb-24">
+      {screen === "home" && <HomeScreen profile={profile} due={due.length} apiKey={apiKey} weaknesses={weaknesses} onNav={setScreen} onStartLesson={(l) => { setCurrentLesson(l); setScreen("lesson"); }} />}
+      {screen === "map" && <MapScreen profile={profile} onBack={() => setScreen("home")} onStart={(l) => { setCurrentLesson(l); setScreen("lesson"); }} onNav={setScreen} />}
+      {screen === "lesson" && currentLesson && <LessonScreen lesson={currentLesson} onComplete={(score, mistakes, itemStats) => { completeLesson(currentLesson.id, score, mistakes, itemStats); setScreen("complete"); }} onQuit={() => setScreen("map")} onAddFlashcard={addFlashcard} />}
+      {screen === "complete" && <CompleteScreen dueCount={due.length} onNext={() => setScreen("map")} onReview={() => setScreen("review")} />}
+      {screen === "review" && <ReviewScreen cards={due} onGrade={reviewCard} onDone={() => setScreen("home")} />}
+      {screen === "stats" && <StatsScreen profile={profile} flashcards={flashcards} weaknesses={weaknesses} onBack={() => setScreen("home")} />}
+      {screen === "chat" && <ChatScreen apiKey={apiKey} history={chatHistory} setHistory={saveChat} profile={profile} weaknesses={weaknesses} onBack={() => setScreen("home")} />}
+      {screen === "writing" && <WritingScreen apiKey={apiKey} onBack={() => setScreen("home")} onXp={(x) => saveProfile({ xp: profile.xp + x })} />}
+      {screen === "ai-lesson" && <AILessonScreen apiKey={apiKey} profile={profile} weaknesses={weaknesses} onComplete={(score, mistakes, itemStats) => { completeLesson("ai-"+Date.now(), score, mistakes, itemStats); setScreen("complete"); }} onBack={() => setScreen("home")} />}
+      {screen === "story" && <StoryScreen apiKey={apiKey} profile={profile} onAddFlashcard={addFlashcard} onBack={() => setScreen("home")} onXp={(x) => saveProfile({ xp: profile.xp + x })} />}
+      {screen === "settings" && <SettingsScreen apiKey={apiKey} onSaveKey={saveApiKey} profile={profile} onSaveProfile={saveProfile} onBack={() => setScreen("home")} />}
+      <BottomNav screen={screen} setScreen={setScreen} due={due.length} />
+    </div></div>
+  );
+}
+
+// ============ SETUP SCREEN ============
+function SetupScreen({ onSave }) {
+  const [key, setKey] = useState("");
+  const [err, setErr] = useState("");
+  const [loading, setLoading] = useState(false);
+  const test = async () => {
+    if (!key.trim()) { setErr("Nhập API key vào"); return; }
+    setLoading(true); setErr("");
+    try {
+      await callGemini(key, "Trả lời ngắn: 'OK'");
+      onSave(key.trim());
+    } catch (e) { setErr("API key không hợp lệ: " + e.message); setLoading(false); }
+  };
+  return (
+    <div className="paper-bg min-h-screen flex items-center justify-center p-6"><div className="paper-tex min-h-screen w-full flex items-center justify-center">
+      <div className="max-w-md w-full slide-up">
+        <div className="text-center mb-8">
+          <div className="float-gentle inline-block mb-4"><Icon name="sparkle" className="w-16 h-16 text-amber-600" /></div>
+          <p className="text-xs tracking-[0.3em] uppercase text-stone-500 mb-2">Chào mừng</p>
+          <h1 className="font-display text-5xl font-black mb-3">Cô Minh</h1>
+          <p className="font-display italic text-stone-600">Giáo viên IELTS cá nhân của bạn</p>
+        </div>
+        <div className="bg-white border border-stone-200 rounded-sm p-6 ink-shadow">
+          <h2 className="font-display text-xl font-bold mb-3">Nhập Gemini API Key</h2>
+          <p className="text-sm text-stone-600 mb-4">Key miễn phí tại <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" className="text-amber-700 underline">aistudio.google.com/apikey</a>. Key lưu trong trình duyệt, không gửi đi đâu khác.</p>
+          <input type="password" value={key} onChange={e => setKey(e.target.value)} placeholder="AIzaSy..." className="w-full px-4 py-3 border border-stone-300 rounded-sm font-mono text-sm mb-3 focus:outline-none focus:border-stone-700" />
+          {err && <p className="text-rose-700 text-sm mb-3">{err}</p>}
+          <button onClick={test} disabled={loading} className="w-full bg-stone-900 text-amber-50 py-3 rounded-sm font-display font-bold hover:bg-stone-800 disabled:opacity-50">
+            {loading ? "Đang kiểm tra..." : "Kiểm tra & Bắt đầu"}
+          </button>
+        </div>
+        <p className="text-xs text-stone-500 text-center mt-4 italic">Gemini miễn phí 1,500 lượt/ngày — dư cho 1 tiếng học/ngày</p>
+      </div>
+    </div></div>
+  );
+}
+
+// ============ HOME SCREEN ============
+function HomeScreen({ profile, due, apiKey, weaknesses, onNav, onStartLesson }) {
+  const totalLessons = CURRICULUM.reduce((s,u) => s + u.lessons.length, 0);
+  const done = Object.keys(profile.completedLessons).length;
+  const [plan, setPlan] = useState(ls.get("dailyPlan", null));
+  const [loadingPlan, setLoadingPlan] = useState(false);
+
+  useEffect(() => {
+    const today = new Date().toDateString();
+    if (!plan || plan.date !== today) {
+      generatePlan();
+    }
+  }, []);
+
+  const generatePlan = async () => {
+    setLoadingPlan(true);
+    try {
+      const weaknessText = weaknesses.length > 0
+        ? `\n- Điểm YẾU cần tập trung: ${weaknesses.slice(0,3).map(w => `${w.tag} (${w.acc}% đúng, ${w.attempts} lần)`).join(", ")}`
+        : "\n- Chưa có đủ dữ liệu về điểm yếu";
+      const prompt = `Học viên IELTS:
+- Band hiện tại: ${profile.currentBand}
+- Streak: ${profile.streak} ngày
+- Tổng XP: ${profile.xp}
+- Đã hoàn thành: ${done}/${totalLessons} bài học${weaknessText}
+- Flashcards đến hạn ôn: ${due}
+
+Viết 1 đoạn gợi ý học HÔM NAY (3-4 câu, tiếng Việt, thân thiện, cụ thể). Nếu có điểm yếu, khuyên tập trung vào đó trước. Nếu nhiều flashcard đến hạn, ôn chúng trước bài mới.`;
+      const resp = await callGemini(apiKey, prompt, CO_MINH_SYSTEM);
+      const newPlan = { date: new Date().toDateString(), text: resp };
+      setPlan(newPlan);
+      ls.set("dailyPlan", newPlan);
+    } catch(e) {
+      setPlan({ date: new Date().toDateString(), text: "Bắt đầu với 1 bài IPA hoặc ôn flashcards. Duy trì thói quen quan trọng hơn độ khó." });
+    }
+    setLoadingPlan(false);
+  };
+
+  return (
+    <div className="max-w-xl mx-auto px-6 pt-10">
+      <div className="slide-up">
+        <div className="flex items-start justify-between mb-8">
+          <div>
+            <p className="text-xs tracking-[0.3em] text-stone-500 uppercase mb-1">Hôm nay · {new Date().toLocaleDateString("vi-VN", {weekday:"long"})}</p>
+            <h1 className="font-display text-5xl font-black leading-none">Cô Minh<br/><span className="italic font-normal text-amber-700 text-3xl">IELTS tutor</span></h1>
+          </div>
+          <button onClick={() => onNav("settings")} className="text-stone-400 hover:text-stone-900">
+            <Icon name="key" className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3 mb-8">
+          <div className="bg-white border border-stone-200 rounded-sm p-4 ink-shadow">
+            <Icon name="flame" className="w-5 h-5 text-amber-600 mb-2" />
+            <div className="font-display text-3xl font-black">{profile.streak}</div>
+            <div className="text-xs text-stone-500">Ngày liên tiếp</div>
+          </div>
+          <div className="bg-white border border-stone-200 rounded-sm p-4 ink-shadow">
+            <Icon name="star" className="w-5 h-5 text-emerald-700 mb-2" />
+            <div className="font-display text-3xl font-black">{profile.xp}</div>
+            <div className="text-xs text-stone-500">Điểm XP</div>
+          </div>
+          <div className="bg-white border border-stone-200 rounded-sm p-4 ink-shadow">
+            <div className="font-display text-3xl font-black">{profile.currentBand}</div>
+            <div className="text-xs text-stone-500">Band</div>
+          </div>
+        </div>
+
+        {/* AI Daily plan */}
+        <div className="bg-amber-50 border border-amber-200 rounded-sm p-5 mb-4 ink-shadow">
+          <div className="flex items-start gap-3">
+            <Icon name="sparkle" className="w-5 h-5 text-amber-700 flex-shrink-0 mt-1" />
+            <div className="flex-1">
+              <p className="text-xs tracking-widest uppercase text-amber-700 mb-1 font-bold">Gợi ý từ Cô Minh</p>
+              {loadingPlan ? <div className="typing text-stone-600">Đang suy nghĩ</div> :
+                <p className="font-display italic text-stone-800 leading-relaxed">{plan?.text}</p>}
+            </div>
+          </div>
+        </div>
+
+        {weaknesses.length > 0 && (
+          <div className="bg-white border border-stone-200 rounded-sm p-4 mb-4 ink-shadow">
+            <p className="text-xs tracking-widest uppercase text-rose-700 mb-2 font-bold">Điểm yếu đang theo dõi</p>
+            <div className="space-y-2">
+              {weaknesses.slice(0,3).map(w => (
+                <div key={w.tag} className="flex items-center justify-between">
+                  <span className="text-sm font-mono">{w.tag}</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-24 h-1.5 bg-stone-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-rose-500" style={{width: `${w.acc}%`}} />
+                    </div>
+                    <span className="text-xs text-stone-600 font-mono w-8 text-right">{w.acc}%</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button onClick={() => onNav("ai-lesson")} className="w-full mt-3 text-xs text-rose-700 hover:text-rose-900 underline">
+              → AI sẽ tạo bài tập tập trung vào những điểm này
+            </button>
+          </div>
+        )}
+
+        <button onClick={() => onNav("map")} className="w-full group relative overflow-hidden bg-stone-900 text-amber-50 p-7 rounded-sm ink-shadow hover:bg-stone-800 transition-all text-left mb-3">
+          <div className="absolute -right-8 -top-8 w-40 h-40 rounded-full bg-amber-600/20 group-hover:bg-amber-600/30 transition-colors" />
+          <div className="relative">
+            <p className="text-xs tracking-[0.25em] text-amber-400/70 uppercase mb-2">Bản đồ bài học</p>
+            <h2 className="font-display text-2xl font-bold mb-1">Học bài theo lộ trình</h2>
+            <p className="text-stone-400 text-sm">{done}/{totalLessons} bài hoàn thành · Band {profile.currentBand}</p>
+          </div>
+        </button>
+
+        <div className="grid grid-cols-3 gap-2 mb-3">
+          <button onClick={() => onNav("ai-lesson")} className="bg-white border border-stone-200 rounded-sm p-4 ink-shadow hover:border-stone-400 transition-all text-left">
+            <Icon name="sparkle" className="w-5 h-5 text-purple-700 mb-2" />
+            <div className="font-display font-bold text-sm">Bài AI</div>
+            <div className="text-[10px] text-stone-500">Sinh bài</div>
+          </button>
+          <button onClick={() => onNav("story")} className="bg-white border border-stone-200 rounded-sm p-4 ink-shadow hover:border-stone-400 transition-all text-left">
+            <div className="text-lg mb-1">😄</div>
+            <div className="font-display font-bold text-sm">Chuyện kể</div>
+            <div className="text-[10px] text-stone-500">4 loại</div>
+          </button>
+          <button onClick={() => onNav("writing")} className="bg-white border border-stone-200 rounded-sm p-4 ink-shadow hover:border-stone-400 transition-all text-left">
+            <Icon name="pen" className="w-5 h-5 text-blue-700 mb-2" />
+            <div className="font-display font-bold text-sm">Writing</div>
+            <div className="text-[10px] text-stone-500">AI chấm</div>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <button onClick={() => onNav("chat")} className="bg-white border border-stone-200 rounded-sm p-5 ink-shadow hover:border-stone-400 transition-all text-left">
+            <Icon name="chat" className="w-5 h-5 text-emerald-700 mb-2" />
+            <div className="font-display font-bold">Chat với Cô</div>
+            <div className="text-xs text-stone-500">Hỏi đáp</div>
+          </button>
+          {due > 0 ? (
+            <button onClick={() => onNav("review")} className="bg-amber-700 text-amber-50 rounded-sm p-5 ink-shadow hover:bg-amber-800 transition-all text-left">
+              <Icon name="rotate" className="w-5 h-5 mb-2" />
+              <div className="font-display font-bold">{due} thẻ đến hạn</div>
+              <div className="text-xs text-amber-200/80">Ôn flashcards</div>
+            </button>
+          ) : (
+            <button onClick={() => onNav("review")} className="bg-white border border-stone-200 rounded-sm p-5 ink-shadow hover:border-stone-400 transition-all text-left">
+              <Icon name="rotate" className="w-5 h-5 text-stone-400 mb-2" />
+              <div className="font-display font-bold">Flashcards</div>
+              <div className="text-xs text-stone-500">Không có thẻ đến hạn</div>
+            </button>
+          )}
+        </div>
+
+        <div className="mt-10 pt-6 border-t border-stone-300/60 text-center">
+          <p className="font-display italic text-stone-500 text-sm">"A language is a map of the heart."</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============ MAP SCREEN ============
+function MapScreen({ profile, onBack, onStart, onNav }) {
+  return (
+    <div className="max-w-xl mx-auto px-6 pt-10">
+      <button onClick={onBack} className="mb-6 text-stone-500 hover:text-stone-900 flex items-center gap-1 text-sm">
+        <Icon name="chevLeft" className="w-4 h-4" /> Trang chính
+      </button>
+      <h1 className="font-display text-4xl font-black mb-2">Lộ trình học</h1>
+      <p className="text-stone-500 text-sm mb-8">Từ band 3.0 đến 6.0 — mở khóa tuần tự</p>
+
+      <div className="space-y-5">
+        {CURRICULUM.map((unit, uIdx) => {
+          const prevUnit = uIdx > 0 ? CURRICULUM[uIdx-1] : null;
+          const prevDone = !prevUnit || prevUnit.isWriting || prevUnit.isAI || prevUnit.lessons.every(l => profile.completedLessons[l.id]);
+          const isLocked = !prevDone;
+          return (
+            <div key={unit.id} className="slide-up" style={{animationDelay:`${uIdx*50}ms`}}>
+              <div className="flex items-start gap-3 mb-3">
+                <div className="w-12 h-12 rounded-sm flex items-center justify-center text-2xl flex-shrink-0" style={{background: isLocked?"#E7E5E4":unit.color, color: isLocked?"#A8A29E":"#FAF7F0"}}>
+                  {isLocked ? <Icon name="lock" className="w-5 h-5" /> : unit.icon}
+                </div>
+                <div className="flex-1 pt-1">
+                  <span className="text-xs tracking-widest uppercase text-stone-500">Band {unit.band}</span>
+                  <h3 className="font-display text-2xl font-bold leading-tight" style={{color: isLocked?"#A8A29E":"#1C1917"}}>{unit.name}</h3>
+                </div>
+              </div>
+              {!isLocked && unit.isWriting && (
+                <div className="ml-15" style={{marginLeft:"60px"}}>
+                  <button onClick={() => onNav("writing")} className="w-full text-left bg-white border border-stone-200 rounded-sm p-4 hover:border-stone-400 transition-all flex items-center justify-between group">
+                    <div className="flex items-center gap-3">
+                      <Icon name="pen" className="w-5 h-5 text-blue-700" />
+                      <div>
+                        <div className="font-medium text-sm">Viết Task 2 — AI chấm theo 4 tiêu chí</div>
+                        <div className="text-xs text-stone-500">Task Response · Coherence · Lexical · Grammar</div>
+                      </div>
+                    </div>
+                    <Icon name="chevRight" className="w-4 h-4 text-stone-400 group-hover:translate-x-1 transition-transform" />
+                  </button>
+                </div>
+              )}
+              {!isLocked && unit.isAI && (
+                <div className="ml-15" style={{marginLeft:"60px"}}>
+                  <button onClick={() => onNav("ai-lesson")} className="w-full text-left bg-white border border-stone-200 rounded-sm p-4 hover:border-stone-400 transition-all flex items-center justify-between group">
+                    <div className="flex items-center gap-3">
+                      <Icon name="sparkle" className="w-5 h-5 text-purple-700" />
+                      <div>
+                        <div className="font-medium text-sm">Bài học do AI tự sinh — không giới hạn</div>
+                        <div className="text-xs text-stone-500">Chọn chủ đề, AI tạo bài mới</div>
+                      </div>
+                    </div>
+                    <Icon name="chevRight" className="w-4 h-4 text-stone-400 group-hover:translate-x-1 transition-transform" />
+                  </button>
+                </div>
+              )}
+              {!isLocked && unit.lessons.length > 0 && (
+                <div className="space-y-2" style={{marginLeft:"60px"}}>
+                  {unit.lessons.map((lesson, lIdx) => {
+                    const doneData = profile.completedLessons[lesson.id];
+                    const prevLessonDone = lIdx === 0 || profile.completedLessons[unit.lessons[lIdx-1].id];
+                    const lLocked = !prevLessonDone;
+                    return (
+                      <button key={lesson.id} disabled={lLocked} onClick={() => onStart(lesson)} className="w-full text-left bg-white border border-stone-200 rounded-sm p-4 hover:border-stone-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between group">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-display font-bold" style={{background: doneData?unit.color:"#F5F5F4", color: doneData?"#FAF7F0":"#78716C"}}>
+                            {doneData ? <Icon name="check" className="w-4 h-4" /> : lIdx + 1}
+                          </div>
+                          <div>
+                            <div className="font-medium text-sm">{lesson.title}</div>
+                            {doneData && <div className="text-xs text-stone-500">Tốt nhất {doneData.best}% · {doneData.attempts} lần</div>}
+                          </div>
+                        </div>
+                        {lLocked ? <Icon name="lock" className="w-4 h-4 text-stone-400" /> : <Icon name="play" className="w-4 h-4 text-stone-400 group-hover:text-stone-900 group-hover:translate-x-1 transition-all" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              {isLocked && <p className="text-stone-400 text-sm italic" style={{marginLeft:"60px"}}>Hoàn thành band trước để mở</p>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ============ HELPERS FOR NEW EXERCISE TYPES ============
+const normalize = (s) => String(s || "").toLowerCase().trim()
+  .replace(/[\/\\]/g, "").replace(/[.,!?;:'"()]/g, "")
+  .replace(/\s+/g, " ").replace(/[ː:]/g, "ː"); // IPA colon variants
+const getItemType = (item, lesson) => item.type || lesson.type || "single";
+const getItemTag = (item, lesson) => item.tag || `${lesson.type || "general"}_${lesson.id || ""}`;
+
+// ============ LESSON SCREEN ============
+function LessonScreen({ lesson, onComplete, onQuit, onAddFlashcard }) {
+  const [idx, setIdx] = useState(0);
+  const [totalScore, setTotalScore] = useState(0); // sum of % per item (max = 100 * n items)
+  const [answered, setAnswered] = useState(false);
+  const [itemResult, setItemResult] = useState(null); // {correct: bool, partial: 0-100, explanation, correctAnswer}
+  const [selected, setSelected] = useState(null); // single/ipa/vocab/stress
+  const [multiSelected, setMultiSelected] = useState(new Set()); // for multi_select
+  const [fillAnswer, setFillAnswer] = useState("");
+  const [mistakes, setMistakes] = useState([]); // flashcards to add
+  const [shuffledOpts, setShuffledOpts] = useState([]);
+  const [itemStartTime, setItemStartTime] = useState(Date.now());
+  const [itemStats, setItemStats] = useState([]); // per-item analytics
+  const [flashcardAdded, setFlashcardAdded] = useState(false);
+
+  const item = lesson.items[idx];
+  const itemType = getItemType(item, lesson);
+  const progress = (idx / lesson.items.length) * 100;
+
+  // Prepare shuffled options for applicable types
+  useEffect(() => {
+    setAnswered(false); setItemResult(null); setSelected(null);
+    setMultiSelected(new Set()); setFillAnswer(""); setFlashcardAdded(false);
+    setItemStartTime(Date.now());
+    if (itemType === "pairs") {
+      setShuffledOpts([item.target, item.distractor].sort(() => Math.random() - 0.5));
+    } else if (itemType === "ipa" || itemType === "vocab" || itemType === "single" || itemType === "ipa_pick") {
+      const opts = item.options || [];
+      setShuffledOpts([...opts].sort(() => Math.random() - 0.5));
+    } else if (itemType === "multi_select") {
+      const opts = item.options || [];
+      setShuffledOpts([...opts].sort(() => Math.random() - 0.5));
+    }
+  }, [idx]);
+
+  // Get correct answer for comparison
+  const getCorrectAnswer = () => {
+    if (itemType === "ipa") return item.ipa;
+    if (itemType === "vocab") return item.vi;
+    if (itemType === "pairs") return item.target;
+    if (itemType === "stress") return item.syllables[item.correct];
+    if (itemType === "single" || itemType === "ipa_pick") return item.correct;
+    if (itemType === "fill_word") return item.answer;
+    if (itemType === "fill_meaning") return (item.answers || [item.vi]).join(" / ");
+    return "";
+  };
+
+  // Record stats and mistake flashcard
+  const recordResult = (scorePct, correctAns) => {
+    const timeMs = Date.now() - itemStartTime;
+    const tag = getItemTag(item, lesson);
+    setItemStats(s => [...s, { tag, correct: scorePct === 100, partial: scorePct, timeMs, type: itemType }]);
+    setTotalScore(s => s + scorePct);
+    if (scorePct < 100) {
+      let card = null;
+      if (itemType === "ipa" || itemType === "ipa_pick") card = { front: item.en, back: item.ipa, type: "ipa", tag };
+      else if (itemType === "vocab" || itemType === "fill_meaning") card = { front: item.en, back: `${item.ipa || ""} — ${(item.answers || [item.vi])[0]}`, type: "vocab", tag };
+      else if (itemType === "fill_word") card = { front: item.ipa, back: `${item.answer} — ${item.hint || ""}`, type: "fill_word", tag };
+      else if (itemType === "pairs") card = { front: item.target, back: `khác: ${item.distractor}`, type: "pair", tag };
+      else if (itemType === "stress") card = { front: item.word, back: `stress: ${item.syllables[item.correct]}`, type: "stress", tag };
+      else if (itemType === "single") card = { front: item.prompt || item.en || "?", back: item.correct + (item.explanation ? ` — ${item.explanation}` : ""), type: "single", tag };
+      else if (itemType === "multi_select") card = { front: item.prompt, back: item.options.filter(o => o.correct).map(o => o.text).join(", "), type: "multi", tag };
+      if (card && card.front) setMistakes(m => [...m, card]);
+    }
+  };
+
+  // Check single answer (button-based)
+  const checkSingle = (choice) => {
+    if (answered) return;
+    let right = false;
+    if (itemType === "ipa") right = choice === item.ipa;
+    else if (itemType === "vocab") right = choice === item.vi;
+    else if (itemType === "pairs") right = choice === item.target;
+    else if (itemType === "stress") right = choice === item.correct;
+    else if (itemType === "single" || itemType === "ipa_pick") right = choice === item.correct;
+    setSelected(choice); setAnswered(true);
+    const score = right ? 100 : 0;
+    setItemResult({ correct: right, partial: score, explanation: item.explanation || "", correctAnswer: getCorrectAnswer() });
+    recordResult(score, getCorrectAnswer());
+  };
+
+  // Check multi-select: must select ALL correct and NO wrong
+  const checkMulti = () => {
+    if (answered) return;
+    const correctSet = new Set(item.options.filter(o => o.correct).map(o => o.text));
+    const selectedArr = Array.from(multiSelected);
+    const correctPicked = selectedArr.filter(s => correctSet.has(s)).length;
+    const wrongPicked = selectedArr.filter(s => !correctSet.has(s)).length;
+    const totalCorrect = correctSet.size;
+    // Score: (correctPicked - wrongPicked) / totalCorrect * 100, clamped 0-100
+    let score = Math.max(0, Math.min(100, Math.round((correctPicked - wrongPicked) / totalCorrect * 100)));
+    if (correctPicked === totalCorrect && wrongPicked === 0) score = 100;
+    const isPerfect = score === 100;
+    setAnswered(true);
+    setItemResult({
+      correct: isPerfect, partial: score,
+      explanation: `Chọn đúng ${correctPicked}/${totalCorrect}${wrongPicked > 0 ? `, chọn sai ${wrongPicked}` : ""}`,
+      correctAnswer: item.options.filter(o => o.correct).map(o => o.text).join(", ")
+    });
+    recordResult(score, "");
+  };
+
+  // Check fill-in
+  const checkFill = () => {
+    if (answered || !fillAnswer.trim()) return;
+    let right = false;
+    if (itemType === "fill_word") {
+      right = normalize(fillAnswer) === normalize(item.answer);
+    } else if (itemType === "fill_meaning") {
+      const acceptable = (item.answers || [item.vi]).map(normalize);
+      const userNorm = normalize(fillAnswer);
+      right = acceptable.some(a => a === userNorm || a.includes(userNorm) || userNorm.includes(a));
+    }
+    setAnswered(true);
+    const score = right ? 100 : 0;
+    setItemResult({ correct: right, partial: score, explanation: "", correctAnswer: getCorrectAnswer() });
+    recordResult(score, getCorrectAnswer());
+  };
+
+  const toggleMulti = (text) => {
+    if (answered) return;
+    const newSet = new Set(multiSelected);
+    if (newSet.has(text)) newSet.delete(text); else newSet.add(text);
+    setMultiSelected(newSet);
+  };
+
+  const next = () => {
+    if (idx + 1 >= lesson.items.length) {
+      const finalScore = Math.round(totalScore / lesson.items.length);
+      onComplete(finalScore, mistakes, itemStats);
+    } else {
+      setIdx(idx + 1);
+    }
+  };
+
+  const addCurrentToFlashcards = () => {
+    let card = null;
+    if (itemType === "vocab" || itemType === "fill_meaning")
+      card = { front: item.en, back: `${item.ipa || ""} — ${(item.answers || [item.vi])[0]}`, type: "vocab", tag: getItemTag(item, lesson) };
+    else if (itemType === "ipa" || itemType === "ipa_pick")
+      card = { front: item.en, back: item.ipa, type: "ipa", tag: getItemTag(item, lesson) };
+    else if (itemType === "fill_word")
+      card = { front: item.answer, back: `${item.ipa} — ${item.hint || ""}`, type: "ipa", tag: getItemTag(item, lesson) };
+    if (card && onAddFlashcard) {
+      onAddFlashcard(card);
+      setFlashcardAdded(true);
+    }
+  };
+
+  const promptLabel = {
+    ipa: "Chọn phiên âm đúng",
+    ipa_pick: "Chọn phiên âm đúng",
+    pairs: "Nghe và chọn từ đúng",
+    stress: "Chọn âm tiết nhấn",
+    vocab: "Chọn nghĩa tiếng Việt",
+    single: "Chọn đáp án đúng",
+    multi_select: "Chọn TẤT CẢ đáp án đúng",
+    fill_word: "Gõ từ tiếng Anh",
+    fill_meaning: "Gõ nghĩa tiếng Việt",
+  }[itemType];
+
+  const canAddFlashcard = ["vocab", "fill_meaning", "ipa", "ipa_pick", "fill_word"].includes(itemType);
+
+  return (
+    <div className="max-w-xl mx-auto px-6 pt-8 pb-40">
+      <div className="flex items-center gap-4 mb-8">
+        <button onClick={onQuit} className="text-stone-500"><Icon name="x" className="w-6 h-6" /></button>
+        <div className="flex-1 h-2 bg-stone-200 rounded-full overflow-hidden">
+          <div className="h-full bg-emerald-700 transition-all duration-500" style={{width:`${progress}%`}} />
+        </div>
+        <span className="font-display text-sm">{idx+1}/{lesson.items.length}</span>
+      </div>
+
+      <p className="text-xs tracking-[0.25em] text-stone-500 uppercase mb-6">{promptLabel}</p>
+
+      {/* IPA / IPA_PICK */}
+      {(itemType === "ipa" || itemType === "ipa_pick") && (
+        <>
+          <div className="text-center mb-8">
+            <button onClick={() => speak(item.en)} className="inline-flex items-center gap-3 bg-stone-900 text-amber-50 px-6 py-4 rounded-sm ink-shadow hover:bg-stone-800 mb-6">
+              <Icon name="volume" className="w-5 h-5" /><span className="font-display text-2xl italic">Nghe</span>
+            </button>
+            <div className="font-display text-6xl font-black">{item.en}</div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {shuffledOpts.map((opt,i) => {
+              const correctOpt = item.ipa || item.correct;
+              const isSel = selected === opt, isRight = answered && opt === correctOpt, isWrong = answered && isSel && !isRight;
+              return <button key={i} onClick={() => checkSingle(opt)} disabled={answered} className={`p-5 rounded-sm text-lg font-mono ink-shadow border-2 transition-all ${isRight?"bg-emerald-600 text-white border-emerald-700":isWrong?"bg-rose-100 text-rose-900 border-rose-600":isSel?"bg-stone-800 text-white":"bg-white border-stone-200 hover:border-stone-400"}`}>{opt}</button>;
+            })}
+          </div>
+        </>
+      )}
+
+      {/* PAIRS */}
+      {itemType === "pairs" && (
+        <>
+          <div className="text-center mb-8">
+            <button onClick={() => speak(item.target, 0.7)} className="inline-flex items-center gap-3 bg-stone-900 text-amber-50 px-6 py-4 rounded-sm ink-shadow hover:bg-stone-800">
+              <Icon name="volume" className="w-5 h-5" /><span className="font-display text-2xl italic">Phát lại</span>
+            </button>
+            {item.pair_type && <p className="text-stone-500 text-xs mt-2 font-mono">{item.pair_type}</p>}
+            <p className="text-stone-500 text-sm mt-2 italic">Nghe kỹ và chọn từ đã nghe</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {shuffledOpts.map((word,i) => {
+              const isSel = selected === word, isRight = answered && word === item.target, isWrong = answered && isSel && !isRight;
+              return (
+                <div key={i} className={`p-6 rounded-sm ink-shadow border-2 transition-all ${isRight?"bg-emerald-600 text-white border-emerald-700":isWrong?"bg-rose-100 text-rose-900 border-rose-600":isSel?"bg-stone-800 text-white":"bg-white border-stone-200"}`}>
+                  <button onClick={() => checkSingle(word)} disabled={answered} className="w-full font-display text-3xl font-bold">{word}</button>
+                  <button onClick={() => speak(word)} className="mt-2 text-xs underline opacity-70 hover:opacity-100 flex items-center gap-1 mx-auto"><Icon name="volume" className="w-3 h-3" /> nghe riêng</button>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {/* STRESS */}
+      {itemType === "stress" && (
+        <>
+          <div className="text-center mb-8">
+            <button onClick={() => speak(item.word)} className="inline-flex items-center gap-3 bg-stone-900 text-amber-50 px-6 py-4 rounded-sm ink-shadow hover:bg-stone-800 mb-6">
+              <Icon name="volume" className="w-5 h-5" /><span className="font-display text-2xl italic">Nghe phát âm</span>
+            </button>
+            <div className="font-display text-5xl font-black">{item.word}</div>
+          </div>
+          <p className="text-center text-stone-500 text-sm mb-4 italic">Âm tiết nào được nhấn mạnh?</p>
+          <div className="flex gap-3 flex-wrap justify-center">
+            {item.syllables.map((syl,i) => {
+              const isSel = selected === i, isRight = answered && i === item.correct, isWrong = answered && isSel && !isRight;
+              return <button key={i} onClick={() => checkSingle(i)} disabled={answered} className={`px-8 py-5 rounded-sm font-display text-3xl font-bold ink-shadow border-2 transition-all ${isRight?"bg-emerald-600 text-white border-emerald-700":isWrong?"bg-rose-100 text-rose-900 border-rose-600":isSel?"bg-stone-800 text-white":"bg-white border-stone-200 hover:border-stone-400"}`}>{syl}</button>;
+            })}
+          </div>
+        </>
+      )}
+
+      {/* VOCAB (cứng) */}
+      {itemType === "vocab" && (
+        <>
+          <div className="bg-white border border-stone-200 rounded-sm p-6 ink-shadow mb-6 text-center">
+            <div className="font-display text-5xl font-black mb-2">{item.en}</div>
+            <div className="font-mono text-amber-700 text-lg mb-3">{item.ipa}</div>
+            <button onClick={() => speak(item.en)} className="inline-flex items-center gap-2 text-stone-600 hover:text-stone-900 text-sm"><Icon name="volume" className="w-4 h-4" /> Nghe</button>
+          </div>
+          <div className="space-y-2">
+            {shuffledOpts.map((opt,i) => {
+              const isSel = selected === opt, isRight = answered && opt === item.vi, isWrong = answered && isSel && !isRight;
+              return <button key={i} onClick={() => checkSingle(opt)} disabled={answered} className={`w-full p-4 rounded-sm text-left ink-shadow border-2 transition-all ${isRight?"bg-emerald-600 text-white border-emerald-700":isWrong?"bg-rose-100 text-rose-900 border-rose-600":isSel?"bg-stone-800 text-white":"bg-white border-stone-200 hover:border-stone-400"}`}>{opt}</button>;
+            })}
+          </div>
+        </>
+      )}
+
+      {/* SINGLE (AI generated với prompt) */}
+      {itemType === "single" && (
+        <>
+          {item.en && (
+            <div className="bg-white border border-stone-200 rounded-sm p-6 ink-shadow mb-4 text-center">
+              <div className="font-display text-4xl font-black mb-1">{item.en}</div>
+              {item.ipa && <div className="font-mono text-amber-700 mb-2">{item.ipa}</div>}
+              <button onClick={() => speak(item.en)} className="inline-flex items-center gap-2 text-stone-600 text-sm"><Icon name="volume" className="w-4 h-4" /> Nghe</button>
+            </div>
+          )}
+          {item.prompt && <p className="font-display text-xl leading-relaxed mb-6 text-center">{item.prompt}</p>}
+          <div className="space-y-2">
+            {shuffledOpts.map((opt,i) => {
+              const isSel = selected === opt, isRight = answered && opt === item.correct, isWrong = answered && isSel && !isRight;
+              return <button key={i} onClick={() => checkSingle(opt)} disabled={answered} className={`w-full p-4 rounded-sm text-left ink-shadow border-2 transition-all ${isRight?"bg-emerald-600 text-white border-emerald-700":isWrong?"bg-rose-100 text-rose-900 border-rose-600":isSel?"bg-stone-800 text-white":"bg-white border-stone-200 hover:border-stone-400"}`}>{opt}</button>;
+            })}
+          </div>
+        </>
+      )}
+
+      {/* MULTI_SELECT */}
+      {itemType === "multi_select" && (
+        <>
+          <div className="bg-amber-50 border border-amber-200 rounded-sm p-3 mb-4 text-xs text-amber-900 text-center">
+            ⚠ Chọn TẤT CẢ đáp án đúng. Sót hoặc chọn dư → điểm một phần.
+          </div>
+          <p className="font-display text-xl leading-relaxed mb-6 text-center">{item.prompt}</p>
+          <div className="space-y-2">
+            {shuffledOpts.map((opt, i) => {
+              const text = opt.text;
+              const isChecked = multiSelected.has(text);
+              const isRight = answered && opt.correct;
+              const isWrong = answered && isChecked && !opt.correct;
+              const missed = answered && !isChecked && opt.correct;
+              return (
+                <button key={i} onClick={() => toggleMulti(text)} disabled={answered} className={`w-full p-4 rounded-sm text-left ink-shadow border-2 transition-all flex items-center gap-3 ${
+                  isRight && isChecked ? "bg-emerald-600 text-white border-emerald-700" :
+                  isWrong ? "bg-rose-100 text-rose-900 border-rose-600" :
+                  missed ? "bg-amber-100 text-amber-900 border-amber-600" :
+                  isChecked ? "bg-stone-800 text-white" :
+                  "bg-white border-stone-200 hover:border-stone-400"
+                }`}>
+                  <div className={`w-5 h-5 rounded-sm border-2 flex items-center justify-center ${isChecked || (answered && opt.correct) ? "bg-current" : ""}`}>
+                    {(isChecked || (answered && opt.correct)) && <Icon name="check" className="w-3 h-3" />}
+                  </div>
+                  <span className="flex-1">{text}</span>
+                  {missed && <span className="text-xs italic">(bị bỏ sót)</span>}
+                </button>
+              );
+            })}
+          </div>
+          {!answered && (
+            <button onClick={checkMulti} disabled={multiSelected.size === 0} className="w-full mt-4 bg-stone-900 text-amber-50 py-3 rounded-sm font-bold disabled:opacity-50">Nộp ({multiSelected.size} đã chọn)</button>
+          )}
+        </>
+      )}
+
+      {/* FILL_WORD - cho IPA, gõ từ */}
+      {itemType === "fill_word" && (
+        <>
+          <div className="bg-white border border-stone-200 rounded-sm p-6 ink-shadow mb-4 text-center">
+            <p className="text-xs uppercase tracking-widest text-stone-500 mb-2">Phiên âm</p>
+            <div className="font-mono text-4xl text-amber-700 mb-2">{item.ipa}</div>
+            {item.hint && <p className="text-sm text-stone-500 italic">Gợi ý nghĩa: {item.hint}</p>}
+          </div>
+          <input type="text" value={fillAnswer} onChange={e => setFillAnswer(e.target.value)} onKeyDown={e => e.key === "Enter" && checkFill()} disabled={answered} placeholder="Gõ từ tiếng Anh..." className={`w-full p-4 border-2 rounded-sm font-display text-2xl text-center focus:outline-none ${answered ? (itemResult?.correct ? "border-emerald-600 bg-emerald-50" : "border-rose-600 bg-rose-50") : "border-stone-300 focus:border-stone-700"}`} autoFocus />
+          {!answered && <button onClick={checkFill} disabled={!fillAnswer.trim()} className="w-full mt-4 bg-stone-900 text-amber-50 py-3 rounded-sm font-bold disabled:opacity-50">Kiểm tra</button>}
+        </>
+      )}
+
+      {/* FILL_MEANING - cho từ + IPA, gõ nghĩa */}
+      {itemType === "fill_meaning" && (
+        <>
+          <div className="bg-white border border-stone-200 rounded-sm p-6 ink-shadow mb-4 text-center">
+            <div className="font-display text-5xl font-black mb-2">{item.en}</div>
+            {item.ipa && <div className="font-mono text-amber-700 text-lg mb-3">{item.ipa}</div>}
+            <button onClick={() => speak(item.en)} className="inline-flex items-center gap-2 text-stone-600 text-sm"><Icon name="volume" className="w-4 h-4" /> Nghe</button>
+          </div>
+          <input type="text" value={fillAnswer} onChange={e => setFillAnswer(e.target.value)} onKeyDown={e => e.key === "Enter" && checkFill()} disabled={answered} placeholder="Gõ nghĩa tiếng Việt..." className={`w-full p-4 border-2 rounded-sm text-xl text-center focus:outline-none ${answered ? (itemResult?.correct ? "border-emerald-600 bg-emerald-50" : "border-rose-600 bg-rose-50") : "border-stone-300 focus:border-stone-700"}`} autoFocus />
+          {!answered && <button onClick={checkFill} disabled={!fillAnswer.trim()} className="w-full mt-4 bg-stone-900 text-amber-50 py-3 rounded-sm font-bold disabled:opacity-50">Kiểm tra</button>}
+        </>
+      )}
+
+      {/* FEEDBACK FOOTER */}
+      {answered && itemResult && (
+        <div className={`fixed bottom-0 left-0 right-0 p-4 slide-up ${itemResult.correct?"bg-emerald-50 border-t-2 border-emerald-700":itemResult.partial > 0 ? "bg-amber-50 border-t-2 border-amber-600" : "bg-rose-50 border-t-2 border-rose-700"}`}>
+          <div className="max-w-xl mx-auto">
+            <div className="flex items-start justify-between gap-4 mb-2">
+              <div className="flex-1">
+                <div className={`font-display text-xl font-bold ${itemResult.correct?"text-emerald-800":itemResult.partial > 0 ? "text-amber-800" : "text-rose-800"}`}>
+                  {itemResult.correct ? "Tuyệt vời! 100%" : itemResult.partial > 0 ? `Đúng một phần: ${itemResult.partial}%` : "Chưa đúng"}
+                </div>
+                {!itemResult.correct && <div className="text-sm mt-1"><span className="text-stone-600">Đáp án đúng: </span><b className="font-mono">{itemResult.correctAnswer}</b></div>}
+                {itemResult.explanation && <div className="text-xs text-stone-600 italic mt-1">{itemResult.explanation}</div>}
+                {item.explanation && <div className="text-xs text-stone-700 italic mt-1">💡 {item.explanation}</div>}
+              </div>
+              <button onClick={next} className={`px-6 py-3 rounded-sm font-bold ink-shadow flex-shrink-0 ${itemResult.correct?"bg-emerald-700 text-white":itemResult.partial > 0 ? "bg-amber-700 text-white" : "bg-rose-700 text-white"}`}>
+                {idx+1 >= lesson.items.length ? "Hoàn thành" : "Tiếp →"}
+              </button>
+            </div>
+            {canAddFlashcard && onAddFlashcard && (
+              <button onClick={addCurrentToFlashcards} disabled={flashcardAdded} className="text-xs text-stone-600 hover:text-stone-900 underline disabled:opacity-50 disabled:no-underline">
+                {flashcardAdded ? "✓ Đã thêm vào flashcards" : "+ Thêm từ này vào flashcards để ôn sau"}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============ COMPLETE ============
+function CompleteScreen({ dueCount, onNext, onReview }) {
+  return (
+    <div className="max-w-xl mx-auto px-6 pt-10 min-h-[80vh] flex flex-col items-center justify-center text-center slide-up">
+      <div className="float-gentle mb-6"><Icon name="trophy" className="w-24 h-24 text-amber-600" /></div>
+      <p className="text-xs tracking-[0.3em] uppercase text-stone-500 mb-2">Chương hoàn tất</p>
+      <h1 className="font-display text-6xl font-black mb-3">Xuất sắc.</h1>
+      <p className="font-display italic text-xl text-stone-600 max-w-md mb-10">Những từ bạn quên đã được ghi vào flashcards để ôn lại.</p>
+      <div className="flex flex-col gap-3 w-full max-w-xs">
+        <button onClick={onNext} className="bg-stone-900 text-amber-50 py-4 rounded-sm font-display text-lg font-bold ink-shadow hover:bg-stone-800">Bài tiếp theo</button>
+        {dueCount > 0 && <button onClick={onReview} className="bg-white border-2 border-amber-700 text-amber-800 py-4 rounded-sm font-display italic">Ôn {dueCount} flashcards trước</button>}
+      </div>
+    </div>
+  );
+}
+
+// ============ REVIEW ============
+function ReviewScreen({ cards, onGrade, onDone }) {
+  const [idx, setIdx] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const [localCards] = useState(cards);
+
+  if (localCards.length === 0) return (
+    <div className="max-w-xl mx-auto px-6 pt-20 text-center">
+      <Icon name="sparkle" className="w-16 h-16 text-amber-600 mx-auto mb-4" />
+      <h1 className="font-display text-4xl font-black mb-3">Không có thẻ đến hạn</h1>
+      <p className="text-stone-600 mb-8">Học thêm bài để tạo flashcards mới</p>
+      <button onClick={onDone} className="bg-stone-900 text-amber-50 px-8 py-3 rounded-sm">Về trang chính</button>
+    </div>
+  );
+
+  if (idx >= localCards.length) return (
+    <div className="max-w-xl mx-auto px-6 pt-20 text-center slide-up">
+      <Icon name="trophy" className="w-20 h-20 text-emerald-700 mx-auto mb-4" />
+      <h1 className="font-display text-4xl font-black mb-3">Hoàn thành ôn tập</h1>
+      <p className="text-stone-600 mb-8">{localCards.length} thẻ đã được cập nhật.</p>
+      <button onClick={onDone} className="bg-stone-900 text-amber-50 px-8 py-3 rounded-sm font-bold">Về trang chính</button>
+    </div>
+  );
+
+  const card = localCards[idx];
+  const grade = (g) => { onGrade(card.id, g); setFlipped(false); setIdx(idx+1); };
+
+  return (
+    <div className="max-w-xl mx-auto px-6 pt-10">
+      <div className="flex items-center gap-4 mb-8">
+        <button onClick={onDone} className="text-stone-500"><Icon name="x" className="w-6 h-6" /></button>
+        <div className="flex-1 h-2 bg-stone-200 rounded-full overflow-hidden">
+          <div className="h-full bg-amber-700 transition-all" style={{width:`${(idx/localCards.length)*100}%`}} />
+        </div>
+        <span className="font-display text-sm">{idx+1}/{localCards.length}</span>
+      </div>
+      <p className="text-xs tracking-[0.3em] uppercase text-stone-500 mb-4 text-center">Flashcard — {card.type}</p>
+      <div onClick={() => setFlipped(!flipped)} className="bg-white border border-stone-200 rounded-sm p-12 ink-shadow cursor-pointer min-h-[280px] flex flex-col items-center justify-center mb-6">
+        {!flipped ? (
+          <>
+            <div className="font-display text-5xl font-black mb-4">{card.front}</div>
+            <button onClick={(e) => { e.stopPropagation(); speak(card.front); }} className="inline-flex items-center gap-2 text-stone-500 hover:text-stone-900 text-sm"><Icon name="volume" className="w-4 h-4" /> nghe</button>
+            <p className="text-xs text-stone-400 italic mt-8">chạm để lật</p>
+          </>
+        ) : (
+          <div className="text-center slide-up"><div className="font-display text-3xl font-bold text-amber-800">{card.back}</div></div>
+        )}
+      </div>
+      {flipped && (
+        <div className="grid grid-cols-4 gap-2 slide-up">
+          <button onClick={() => grade(0)} className="bg-rose-700 text-white py-3 rounded-sm font-bold hover:bg-rose-800">Quên</button>
+          <button onClick={() => grade(1)} className="bg-amber-600 text-white py-3 rounded-sm font-bold hover:bg-amber-700">Khó</button>
+          <button onClick={() => grade(2)} className="bg-emerald-700 text-white py-3 rounded-sm font-bold hover:bg-emerald-800">Được</button>
+          <button onClick={() => grade(3)} className="bg-stone-900 text-amber-50 py-3 rounded-sm font-bold hover:bg-stone-800">Dễ</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============ CHAT SCREEN ============
+function ChatScreen({ apiKey, history, setHistory, profile, onBack }) {
+  const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
+  const endRef = useRef(null);
+
+  useEffect(() => { endRef.current?.scrollIntoView({behavior:"smooth"}); }, [history, sending]);
+
+  const send = async () => {
+    if (!input.trim() || sending) return;
+    const userMsg = { role: "user", text: input.trim() };
+    const newHist = [...history, userMsg];
+    setHistory(newHist);
+    setInput("");
+    setSending(true);
+    try {
+      const context = `Học viên: Band ${profile.currentBand}, streak ${profile.streak} ngày.
+Lịch sử: ${newHist.slice(-6).map(m => `${m.role}: ${m.text}`).join("\n")}
+
+Trả lời tin nhắn mới nhất của học viên, giữ câu trả lời ngắn gọn.`;
+      const resp = await callGemini(apiKey, context, CO_MINH_SYSTEM);
+      setHistory([...newHist, { role: "assistant", text: resp }]);
+    } catch(e) {
+      setHistory([...newHist, { role: "assistant", text: "Xin lỗi, cô bị lỗi kết nối. Kiểm tra API key và thử lại nhé. Lỗi: " + e.message }]);
+    }
+    setSending(false);
+  };
+
+  const clear = () => { if (confirm("Xóa toàn bộ lịch sử chat?")) setHistory([]); };
+
+  return (
+    <div className="max-w-xl mx-auto px-6 pt-10 pb-32">
+      <div className="flex items-center justify-between mb-6">
+        <button onClick={onBack} className="text-stone-500 flex items-center gap-1 text-sm"><Icon name="chevLeft" className="w-4 h-4" /> Trang chính</button>
+        {history.length > 0 && <button onClick={clear} className="text-stone-400 hover:text-rose-700 text-xs">Xóa lịch sử</button>}
+      </div>
+      <div className="mb-6">
+        <p className="text-xs tracking-[0.3em] uppercase text-stone-500 mb-1">Hỏi đáp</p>
+        <h1 className="font-display text-4xl font-black">Chat với Cô Minh</h1>
+      </div>
+
+      <div className="space-y-4 mb-6 min-h-[200px]">
+        {history.length === 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-sm p-4 slide-up">
+            <p className="font-display italic text-stone-700">Chào em! Em có câu hỏi gì về IELTS? Cô có thể giải thích ngữ pháp, chấm câu em viết, hoặc luyện Speaking cùng em. 📚</p>
+          </div>
+        )}
+        {history.map((m, i) => (
+          <div key={i} className={`slide-up ${m.role === "user" ? "flex justify-end" : ""}`}>
+            <div className={`max-w-[85%] p-4 rounded-sm ${m.role === "user" ? "bg-stone-900 text-amber-50" : "bg-white border border-stone-200 ink-shadow"}`}>
+              <p className={m.role === "user" ? "" : "font-display"} style={{whiteSpace:"pre-wrap"}}>{m.text}</p>
+            </div>
+          </div>
+        ))}
+        {sending && <div className="bg-white border border-stone-200 rounded-sm p-4 max-w-[85%] ink-shadow"><p className="typing text-stone-500 font-display italic">Cô đang suy nghĩ</p></div>}
+        <div ref={endRef} />
+      </div>
+
+      <div className="fixed bottom-16 left-0 right-0 bg-stone-50/95 backdrop-blur border-t border-stone-300 p-4">
+        <div className="max-w-xl mx-auto flex gap-2">
+          <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && send()} placeholder="Hỏi cô về ngữ pháp, từ vựng, Writing..." className="flex-1 px-4 py-3 border border-stone-300 rounded-sm focus:outline-none focus:border-stone-700" />
+          <button onClick={send} disabled={sending} className="bg-stone-900 text-amber-50 px-5 rounded-sm hover:bg-stone-800 disabled:opacity-50 flex items-center gap-2">
+            <Icon name="send" className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============ WRITING SCREEN ============
+function WritingScreen({ apiKey, onBack, onXp }) {
+  const [prompt, setPrompt] = useState(null);
+  const [essay, setEssay] = useState("");
+  const [grading, setGrading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const genPrompt = async () => {
+    setLoading(true); setPrompt(null); setResult(null); setEssay("");
+    try {
+      const r = await callGemini(apiKey,
+        `Sinh 1 đề IELTS Writing Task 2 ngẫu nhiên, band ~5.5-6.0.
+Trả về JSON đúng format:
+{ "topic": "...", "prompt": "câu đề bài đầy đủ bằng tiếng Anh", "vi": "dịch tiếng Việt ngắn" }`,
+        null, true);
+      const data = JSON.parse(r);
+      setPrompt(data);
+    } catch(e) { alert("Lỗi: " + e.message); }
+    setLoading(false);
+  };
+
+  const grade = async () => {
+    if (essay.trim().split(/\s+/).length < 50) { alert("Viết tối thiểu 50 từ"); return; }
+    setGrading(true);
+    try {
+      const wordCount = essay.trim().split(/\s+/).length;
+      const r = await callGemini(apiKey,
+        `Bạn là giám khảo IELTS có chứng chỉ Cambridge, chấm chính xác theo band descriptor 2024.
+
+ĐỀ BÀI:
+${prompt.prompt}
+
+BÀI LÀM CỦA HỌC VIÊN (${wordCount} từ):
+${essay}
+
+YÊU CẦU CHẤM:
+1. Chấm thật, không nâng điểm. Nếu bài band 4.5 thì chấm 4.5, không lên 5.5.
+2. Với mỗi tiêu chí, chỉ ra VỊ TRÍ CỤ THỂ trong bài (trích dẫn câu, dòng) thay vì nhận xét chung.
+3. List lỗi: ít nhất 4-6 lỗi quan trọng nhất (ngữ pháp + lexical + coherence). Với mỗi lỗi đưa: câu gốc, câu sửa, giải thích quy tắc.
+4. Gợi ý: không nói chung chung, mà đưa 3 hành động cụ thể (ví dụ: "thay 'very important' bằng 'crucial/essential'", "dùng 'furthermore' thay vì lặp 'and'").
+5. Thêm 1 câu VIẾT LẠI BAND 6.5: chọn 1 câu trong bài viết lại ở level band 6.5 để học viên học theo.
+
+Trả về JSON đúng format này:
+{
+  "overall_band": 5.5,
+  "word_count_ok": true,
+  "task_response": { "band": 6.0, "comment": "nhận xét cụ thể tiếng Việt, trích dẫn câu từ bài" },
+  "coherence": { "band": 5.5, "comment": "..." },
+  "lexical": { "band": 5.0, "comment": "..." },
+  "grammar": { "band": 5.5, "comment": "..." },
+  "top_errors": [
+    { "wrong": "câu gốc sai trong bài", "correct": "câu đã sửa", "explanation": "giải thích quy tắc ngắn tiếng Việt", "type": "grammar|lexical|coherence" }
+  ],
+  "rewrite_sample": { "original": "câu gốc từ bài", "band_65": "cùng ý viết lại ở band 6.5", "note": "giải thích tại sao câu band 6.5 tốt hơn" },
+  "strengths": "1-2 câu nêu điểm MẠNH của bài (tiếng Việt)",
+  "suggestions": "3 gợi ý hành động cụ thể (tiếng Việt, dùng gạch đầu dòng bằng - )"
+}`,
+        null, true);
+      const data = JSON.parse(r);
+      setResult(data);
+      onXp(30);
+    } catch(e) { alert("Lỗi chấm: " + e.message + "\n\nNếu lỗi 'quota exceeded' nghĩa là đã dùng hết cả Pro (50/ngày) và Flash (1500/ngày). Đợi mai reset."); }
+    setGrading(false);
+  };
+
+  return (
+    <div className="max-w-xl mx-auto px-6 pt-10 pb-20">
+      <button onClick={onBack} className="mb-6 text-stone-500 flex items-center gap-1 text-sm"><Icon name="chevLeft" className="w-4 h-4" /> Trang chính</button>
+      <h1 className="font-display text-4xl font-black mb-2">IELTS Writing Task 2</h1>
+      <p className="text-stone-500 text-sm mb-2">AI chấm theo 4 tiêu chí Cambridge</p>
+      <div className="inline-flex items-center gap-2 text-xs bg-stone-900 text-amber-50 px-3 py-1 rounded-sm mb-8">
+        <Icon name="sparkle" className="w-3 h-3" />
+        <span>Gemini 2.5 Pro · 50 bài/ngày miễn phí</span>
+      </div>
+
+      {!prompt && (
+        <button onClick={genPrompt} disabled={loading} className="w-full bg-stone-900 text-amber-50 p-6 rounded-sm ink-shadow font-display text-xl font-bold hover:bg-stone-800 disabled:opacity-50">
+          {loading ? "Đang tạo đề..." : "Sinh đề bài mới"}
+        </button>
+      )}
+
+      {prompt && !result && (
+        <>
+          <div className="bg-white border border-stone-200 rounded-sm p-6 ink-shadow mb-4">
+            <p className="text-xs tracking-widest uppercase text-stone-500 mb-2">Chủ đề: {prompt.topic}</p>
+            <p className="font-display text-lg leading-relaxed mb-3">{prompt.prompt}</p>
+            <p className="text-sm text-stone-600 italic">{prompt.vi}</p>
+          </div>
+          <p className="text-xs text-stone-500 mb-2">Viết tối thiểu 250 từ. Thời gian gợi ý: 40 phút.</p>
+          <textarea value={essay} onChange={e => setEssay(e.target.value)} placeholder="Bắt đầu viết..." className="w-full min-h-[300px] p-4 border border-stone-300 rounded-sm font-body focus:outline-none focus:border-stone-700" />
+          <div className="flex items-center justify-between mt-2 mb-4">
+            <span className="text-sm text-stone-500">{essay.trim().split(/\s+/).filter(Boolean).length} từ</span>
+            <button onClick={grade} disabled={grading} className="bg-emerald-700 text-white px-6 py-3 rounded-sm font-bold hover:bg-emerald-800 disabled:opacity-50">
+              {grading ? "Đang chấm..." : "Nộp bài cho cô chấm"}
+            </button>
+          </div>
+        </>
+      )}
+
+      {result && (
+        <div className="slide-up">
+          <div className="bg-stone-900 text-amber-50 p-8 rounded-sm ink-shadow mb-4 text-center relative overflow-hidden">
+            <div className="absolute top-2 right-3 text-[10px] tracking-widest uppercase text-amber-400/50">Gemini 2.5 Pro</div>
+            <p className="text-xs tracking-[0.3em] uppercase text-amber-400/70 mb-2">Band Overall</p>
+            <div className="font-display text-7xl font-black">{result.overall_band}</div>
+            {result.word_count_ok === false && <p className="text-rose-300 text-xs mt-2">⚠ Dưới 250 từ — band bị trừ</p>}
+          </div>
+          {result.strengths && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-sm p-4 mb-3">
+              <h3 className="font-display font-bold text-emerald-900 mb-1 flex items-center gap-2">
+                <Icon name="check" className="w-4 h-4" /> Điểm mạnh của bài
+              </h3>
+              <p className="text-sm text-emerald-900 font-display italic">{result.strengths}</p>
+            </div>
+          )}
+          {["task_response","coherence","lexical","grammar"].map(k => {
+            const labels = { task_response:"Task Response", coherence:"Coherence & Cohesion", lexical:"Lexical Resource", grammar:"Grammar" };
+            return (
+              <div key={k} className="bg-white border border-stone-200 rounded-sm p-4 ink-shadow mb-3">
+                <div className="flex justify-between items-baseline mb-2">
+                  <h3 className="font-display font-bold">{labels[k]}</h3>
+                  <span className="font-display text-2xl font-black text-amber-700">{result[k].band}</span>
+                </div>
+                <p className="text-sm text-stone-700 leading-relaxed">{result[k].comment}</p>
+              </div>
+            );
+          })}
+          {result.top_errors?.length > 0 && (
+            <div className="bg-rose-50 border border-rose-200 rounded-sm p-4 mb-3">
+              <h3 className="font-display font-bold text-rose-900 mb-3">Lỗi cần sửa ({result.top_errors.length})</h3>
+              <div className="space-y-3">
+                {result.top_errors.map((e,i) => (
+                  <div key={i} className="text-sm pb-2 border-b border-rose-200 last:border-0">
+                    {e.type && <span className="inline-block text-[10px] px-2 py-0.5 rounded-sm bg-rose-200 text-rose-900 uppercase tracking-wider mb-1">{e.type}</span>}
+                    <div className="mb-1"><s className="text-rose-700">{e.wrong}</s></div>
+                    <div className="mb-1">→ <b className="text-emerald-700">{e.correct}</b></div>
+                    <div className="text-xs text-stone-600 italic">{e.explanation}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {result.rewrite_sample && (
+            <div className="bg-blue-50 border border-blue-200 rounded-sm p-4 mb-3">
+              <h3 className="font-display font-bold text-blue-900 mb-2">Câu mẫu ở band 6.5</h3>
+              <div className="text-sm space-y-2">
+                <div><span className="text-xs text-stone-500 uppercase tracking-wider">Bài bạn viết:</span><div className="italic text-stone-700">"{result.rewrite_sample.original}"</div></div>
+                <div><span className="text-xs text-blue-700 uppercase tracking-wider">Band 6.5:</span><div className="font-display text-blue-900 italic">"{result.rewrite_sample.band_65}"</div></div>
+                {result.rewrite_sample.note && <div className="text-xs text-stone-600 italic pt-2 border-t border-blue-200">💡 {result.rewrite_sample.note}</div>}
+              </div>
+            </div>
+          )}
+          <div className="bg-amber-50 border border-amber-200 rounded-sm p-4 mb-4">
+            <h3 className="font-display font-bold text-amber-900 mb-2">Gợi ý từ cô</h3>
+            <p className="text-sm text-amber-900 font-display italic leading-relaxed" style={{whiteSpace:"pre-wrap"}}>{result.suggestions}</p>
+          </div>
+          <button onClick={genPrompt} className="w-full bg-stone-900 text-amber-50 py-3 rounded-sm font-bold">Viết đề mới</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============ AI LESSON SCREEN ============
+function AILessonScreen({ apiKey, profile, weaknesses, onComplete, onBack }) {
+  const [topic, setTopic] = useState("");
+  const [lessonType, setLessonType] = useState("vocab_mixed");
+  const [lesson, setLesson] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const topics = ["Environment","Technology","Health","Education","Work","Travel","Food","Family","Sports","Media","Random"];
+
+  const weaknessHint = weaknesses.length > 0
+    ? `Học viên đang YẾU ở: ${weaknesses.slice(0,3).map(w => w.tag + ` (${w.acc}%)`).join(", ")}. Ưu tiên bài tập tập trung vào các điểm yếu này.`
+    : "";
+
+  const gen = async (t) => {
+    setLoading(true); setTopic(t);
+    try {
+      let promptText = "";
+
+      if (lessonType === "vocab_mixed") {
+        promptText = `Tạo 1 bài học từ vựng IELTS chủ đề "${t}" cho học viên band ${profile.currentBand}. ${weaknessHint}
+
+Tạo 8 items với CÁC LOẠI BÀI TẬP KHÁC NHAU trộn lẫn:
+- 3 items loại "single" (chọn 1 đáp án đúng về nghĩa)
+- 2 items loại "multi_select" (chọn nhiều đáp án đúng — ví dụ: "Những từ nào là synonym của X?")
+- 2 items loại "fill_word" (cho phiên âm, gõ từ)
+- 1 item loại "fill_meaning" (cho từ + IPA, gõ nghĩa tiếng Việt)
+
+JSON format chính xác:
+{
+  "title": "${t} vocabulary",
+  "items": [
+    {"type":"single","en":"word","ipa":"/ipa/","vi":"nghĩa","options":["đáp đúng","sai 1","sai 2","sai 3"],"correct":"đáp đúng","tag":"vocab_${t.toLowerCase()}"},
+    {"type":"multi_select","prompt":"Từ nào là synonym của 'important'?","options":[{"text":"crucial","correct":true},{"text":"trivial","correct":false},{"text":"essential","correct":true},{"text":"optional","correct":false},{"text":"vital","correct":true}],"tag":"vocab_synonym"},
+    {"type":"fill_word","ipa":"/ˌsʌsteɪnəbl/","answer":"sustainable","hint":"bền vững","tag":"vocab_${t.toLowerCase()}"},
+    {"type":"fill_meaning","en":"mitigate","ipa":"/ˈmɪtɪɡeɪt/","answers":["giảm nhẹ","giảm thiểu","làm nhẹ đi"],"tag":"vocab_${t.toLowerCase()}"}
+  ]
+}
+
+QUAN TRỌNG về chất lượng:
+- Single: options[0] = đáp án đúng, 3 distractors phải HỢP LÝ (cùng phạm vi ngữ nghĩa, dễ nhầm)
+- Multi-select: có 5-6 options, 2-3 correct, các options còn lại phải là distractor khó
+- Fill word: IPA chuẩn British RP
+- Fill meaning: "answers" là mảng 2-3 cách diễn đạt nghĩa tiếng Việt đều chấp nhận được`;
+
+      } else if (lessonType === "ipa_drill") {
+        promptText = `Tạo 1 bài tập IPA khó cho học viên band ${profile.currentBand}. Chủ đề từ vựng: "${t}". ${weaknessHint}
+
+Tạo 8 items với loại "ipa_pick" (chọn phiên âm đúng):
+- Từ phải có 2-3 âm tiết hoặc có âm khó (/θ/, /ð/, /ʃ/, /ʒ/, /dʒ/, schwa /ə/, diphthongs)
+- Distractors PHẢI KHÁC ĐÁP ÁN ĐÚNG CHỈ 1 ÂM DUY NHẤT (giống DailyDictation) để làm học viên phải nghe/phân biệt kỹ
+
+Ví dụ với từ "thought" /θɔːt/, distractors phải là:
+  ✓ "/θɔːt/" (đúng)
+  × "/sɔːt/" (thay /θ/→/s/ - âm đầu gần)
+  × "/θɒt/" (thay /ɔː/→/ɒ/ - vowel length)
+  × "/fɔːt/" (thay /θ/→/f/ - người Việt hay nhầm)
+
+KHÔNG được dùng distractor khác quá xa như "/bɔːt/" hay "/miː/" — như thế quá dễ.
+
+JSON format:
+{
+  "title": "IPA Drill: ${t}",
+  "items": [
+    {"type":"ipa_pick","en":"word","ipa":"/correct_ipa/","options":["/correct/","/near1/","/near2/","/near3/"],"correct":"/correct/","tag":"ipa_vowel|ipa_consonant|ipa_stress","difficulty_note":"âm nào dễ nhầm"}
+  ]
+}
+
+Tag: dùng "ipa_vowel" nếu từ có vowel khó, "ipa_consonant" nếu consonant khó, "ipa_stress" nếu trọng âm lạ.`;
+
+      } else if (lessonType === "pairs") {
+        promptText = `Tạo 8 cặp minimal pairs IELTS band ${profile.currentBand} theo chủ đề "${t}". ${weaknessHint}
+
+Mỗi cặp có 2 từ khác nhau CHỈ 1 ÂM — học viên nghe và chọn đúng từ đã nghe.
+
+JSON format:
+{
+  "title": "Minimal Pairs: ${t}",
+  "items": [
+    {"type":"pairs","target":"ship","distractor":"sheep","pair_type":"/ɪ/ vs /iː/","tag":"ipa_vowel_minimal"},
+    ...
+  ]
+}
+
+Ưu tiên các cặp IELTS hay gặp: /ɪ/-/iː/, /æ/-/e/, /θ/-/s/, /ð/-/d/, /v/-/w/, /ʃ/-/s/, /tʃ/-/ʃ/.`;
+
+      } else if (lessonType === "grammar") {
+        promptText = `Tạo 8 bài tập ngữ pháp IELTS cho học viên band ${profile.currentBand}. Chủ đề có thể liên quan "${t}". ${weaknessHint}
+
+Trộn các loại:
+- 4 items loại "single" chọn đáp án đúng (VD: "The book ___ by the teacher yesterday.")
+- 2 items loại "multi_select" (VD: "Những câu nào đúng ngữ pháp?")
+- 2 items loại "fill_word" (VD: "___ you ever been to Paris?" — answer: "Have")
+
+JSON format:
+{
+  "title": "Grammar: ${t}",
+  "items": [
+    {"type":"single","prompt":"câu có chỗ trống","options":["đáp đúng","sai 1","sai 2","sai 3"],"correct":"đáp đúng","explanation":"giải thích ngắn tiếng Việt","tag":"grammar_tense|grammar_prep|grammar_article|..."},
+    {"type":"multi_select","prompt":"Câu nào đúng?","options":[{"text":"...","correct":true},...],"tag":"grammar_..."},
+    {"type":"fill_word","prompt":"câu có ___","answer":"word","tag":"grammar_..."}
+  ]
+}
+
+Tag cụ thể: grammar_tense, grammar_prep, grammar_article, grammar_conditional, grammar_passive, grammar_relative, grammar_comparative.`;
+      }
+
+      const r = await callGemini(apiKey, promptText, null, true);
+      const data = JSON.parse(r);
+      data.id = "ai-" + Date.now();
+      data.type = "mixed"; // lesson có nhiều kiểu items
+      setLesson(data);
+    } catch(e) { alert("Lỗi: " + e.message); }
+    setLoading(false);
+  };
+
+  if (lesson) return <LessonScreen lesson={lesson} onComplete={onComplete} onQuit={() => setLesson(null)} />;
+
+  return (
+    <div className="max-w-xl mx-auto px-6 pt-10">
+      <button onClick={onBack} className="mb-6 text-stone-500 flex items-center gap-1 text-sm"><Icon name="chevLeft" className="w-4 h-4" /> Trang chính</button>
+      <h1 className="font-display text-4xl font-black mb-2">Bài học AI tạo</h1>
+      <p className="text-stone-500 text-sm mb-6">Band {profile.currentBand} · Gemini 2.5 Pro</p>
+
+      {weaknesses.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-sm p-3 mb-6">
+          <p className="text-xs uppercase tracking-widest text-amber-800 mb-1">AI biết điểm yếu của bạn</p>
+          <p className="text-sm font-display italic text-amber-900">Sẽ ưu tiên: {weaknesses.slice(0,3).map(w => w.tag).join(", ")}</p>
+        </div>
+      )}
+
+      <p className="text-xs uppercase tracking-widest text-stone-500 mb-2">Loại bài tập</p>
+      <div className="grid grid-cols-2 gap-2 mb-6">
+        {[
+          {id:"vocab_mixed", label:"Từ vựng hỗn hợp", desc:"Chọn + điền + multi"},
+          {id:"ipa_drill", label:"IPA drill", desc:"Phiên âm khó"},
+          {id:"pairs", label:"Minimal pairs", desc:"Nghe phân biệt"},
+          {id:"grammar", label:"Ngữ pháp", desc:"4 kiểu trộn lẫn"},
+        ].map(opt => (
+          <button key={opt.id} onClick={() => setLessonType(opt.id)} className={`p-3 rounded-sm border-2 text-left transition-all ${lessonType === opt.id ? "bg-stone-900 text-amber-50 border-stone-900" : "bg-white border-stone-200 hover:border-stone-400"}`}>
+            <div className="font-display font-bold text-sm">{opt.label}</div>
+            <div className="text-xs opacity-70">{opt.desc}</div>
+          </button>
+        ))}
+      </div>
+
+      <p className="text-xs uppercase tracking-widest text-stone-500 mb-2">Chủ đề</p>
+      {loading ? (
+        <div className="text-center py-16">
+          <Icon name="sparkle" className="w-12 h-12 text-amber-600 mx-auto mb-4 float-gentle" />
+          <p className="font-display italic text-stone-600">Cô đang soạn bài "{topic}"...</p>
+          <p className="text-xs text-stone-400 mt-2">Pro chấm kỹ hơn, mất 20-40s</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-3 gap-2">
+          {topics.map(t => (
+            <button key={t} onClick={() => gen(t)} className="bg-white border border-stone-200 rounded-sm p-3 ink-shadow hover:border-stone-400 text-left">
+              <div className="font-display text-sm font-bold">{t}</div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============ STORY SCREEN ============
+function StoryScreen({ apiKey, profile, onAddFlashcard, onBack, onXp }) {
+  const TOPICS = ["Environment","Technology","Education","Work","Travel","Food","Family","Sports","Media","Health","Shopping","City Life","Art","Science"];
+  const STORY_TYPES = [
+    { id: "funny", label: "Chuyện cười", icon: "😄", desc: "Short jokes, puns, twists", color: "#B45309" },
+    { id: "anecdote", label: "Mẩu chuyện thật", icon: "💭", desc: "Real-life story", color: "#0F766E" },
+    { id: "fable", label: "Ngụ ngôn", icon: "🦊", desc: "Moral lesson", color: "#7C2D12" },
+    { id: "dialogue", label: "Hội thoại hài", icon: "💬", desc: "2-person funny chat", color: "#6D28D9" },
+  ];
+
+  const [type, setType] = useState("funny");
+  const [topic, setTopic] = useState("");
+  const [story, setStory] = useState(ls.get("currentStory", null));
+  const [loading, setLoading] = useState(false);
+  const [quizAnswered, setQuizAnswered] = useState({});
+  const [retellInput, setRetellInput] = useState("");
+  const [retellFeedback, setRetellFeedback] = useState(null);
+  const [retellLoading, setRetellLoading] = useState(false);
+  const [addedWords, setAddedWords] = useState(new Set());
+  const [library, setLibrary] = useState(ls.get("storyLibrary", []));
+  const [view, setView] = useState("reader"); // reader | library | selector
+  const [popup, setPopup] = useState(null); // { text, loading, data }
+  const [selectedText, setSelectedText] = useState("");
+
+  // Khởi tạo view dựa trên trạng thái
+  useEffect(() => {
+    if (!story) setView("selector");
+    else setView("reader");
+  }, []);
+
+  const generate = async (chosenTopic) => {
+    setLoading(true); setTopic(chosenTopic);
+    setQuizAnswered({}); setRetellInput(""); setRetellFeedback(null); setAddedWords(new Set());
+    setView("reader");
+    
+    const typeSpec = {
+      funny: "Một CHUYỆN CƯỜI ngắn 80-120 từ tiếng Anh. Phải có punchline (câu chốt gây cười) ở cuối. Humor thông minh, không thô.",
+      anecdote: "Một MẨU CHUYỆN THẬT 100-150 từ, kể ở ngôi thứ nhất. Có plot twist hoặc ending bất ngờ nhẹ. Giống Reader's Digest.",
+      fable: "Một CHUYỆN NGỤ NGÔN 100-140 từ với nhân vật động vật hoặc người. Có bài học đạo đức (moral) rõ ràng ở cuối.",
+      dialogue: "Một HỘI THOẠI HÀI giữa 2 người (A và B) 80-120 từ tổng cộng. Format: 'A: ...\\nB: ...'. Có twist hoặc punchline ở cuối."
+    }[type];
+
+    // Anti-duplication: lấy tiêu đề + câu đầu của 10 chuyện gần nhất cùng loại+chủ đề
+    const sameCategory = library.filter(s => s.type === type && s.topic === chosenTopic).slice(-10);
+    const antiDupHint = sameCategory.length > 0
+      ? `\n\nQUAN TRỌNG — TRÁNH TRÙNG LẶP. Đã có ${sameCategory.length} chuyện loại "${type}" chủ đề "${chosenTopic}" trước đây:
+${sameCategory.map((s, i) => `${i+1}. "${s.title}" — mở đầu: "${s.story.slice(0, 80)}..."`).join("\n")}
+
+Chuyện mới PHẢI có:
+- Plot/cốt truyện KHÁC hoàn toàn các chuyện trên
+- Nhân vật/setting/twist khác
+- Tiêu đề khác
+Được phép lặp 1-2 từ vựng từ các chuyện cũ, nhưng ngữ cảnh sử dụng phải khác.`
+      : "";
+
+    try {
+      const r = await callGemini(apiKey,
+        `Tạo 1 câu chuyện tiếng Anh theo yêu cầu:
+- Loại: ${type} — ${typeSpec}
+- Chủ đề IELTS: ${chosenTopic}
+- Band ${profile.currentBand} (từ vựng và cấu trúc phù hợp)
+- Phải chứa 5-8 từ vựng/collocations IELTS chủ đề "${chosenTopic}"
+- Ngôn ngữ tự nhiên như người bản xứ viết${antiDupHint}
+
+Trả về JSON format chính xác:
+{
+  "title": "English title ngắn gọn",
+  "story": "câu chuyện đầy đủ tiếng Anh",
+  "story_vi": "bản dịch tiếng Việt (sát nghĩa, tự nhiên)",
+  "punchline_explanation": "giải thích tiếng Việt tại sao đoạn này HÀI/Ý NGHĨA (đặc biệt cho funny và dialogue)",
+  "image_emoji": "3-5 emoji đại diện cho scene chính, VD: 🍕🧑‍🍳😂 hoặc 🌳🦊🌙",
+  "image_keywords": "2-3 keywords tiếng Anh mô tả hình ảnh chính",
+  "scene_description": "1 câu tiếng Anh mô tả cảnh chính",
+  "svg_illustration": "1 đoạn SVG code hoàn chỉnh minh họa cảnh chính của chuyện, viewBox='0 0 400 200', phong cách flat illustration, 3-5 màu (ưu tiên warm tones như amber/emerald/stone). Dùng shapes cơ bản (circle, rect, path, polygon). Không dùng external fonts, không dùng <image>. SVG phải là string hợp lệ, KHÔNG escape quotes. Ví dụ: '<svg viewBox=\\\"0 0 400 200\\\" xmlns=\\\"http://www.w3.org/2000/svg\\\"><rect...\\/></svg>'",
+  "vocabulary": [
+    {"en":"word","ipa":"/ipa/","vi":"nghĩa tiếng việt","usage_in_story":"trích câu trong chuyện có chứa từ này"}
+  ],
+  "quiz": [
+    {"question":"câu hỏi tiếng Anh","options":["A","B","C","D"],"correct":"A","explanation_vi":"giải thích đáp án"}
+  ]
+}
+
+Quan trọng:
+- "vocabulary": 5-8 từ, ưu tiên collocations IELTS band 5.0-6.5
+- "quiz": 3 câu — 1 main idea, 1 detail, 1 vocabulary in context
+- "punchline_explanation": BẮT BUỘC giải thích tiếng Việt cho funny/dialogue
+- "svg_illustration": BẮT BUỘC — SVG vẽ minh họa scene chính, flat style, warm colors. Phải hợp lệ và render được. Nếu không thể sinh SVG tốt thì tạo pattern trừu tượng đẹp với nhiều circle/rect xếp đặt có ý đồ.
+- "image_emoji": emoji KHÁC các chuyện cũ nếu có`,
+        null, true);
+      const data = JSON.parse(r);
+      data.id = "story-" + Date.now();
+      data.type = type;
+      data.topic = chosenTopic;
+      data.createdAt = Date.now();
+      setStory(data);
+      ls.set("currentStory", data);
+      // Save to library (keep last 50)
+      const newLib = [data, ...library].slice(0, 50);
+      setLibrary(newLib);
+      ls.set("storyLibrary", newLib);
+    } catch(e) { 
+      alert("Lỗi tạo chuyện: " + e.message);
+    }
+    setLoading(false);
+  };
+
+  const checkQuiz = (qIdx, answer) => {
+    if (quizAnswered[qIdx]) return;
+    setQuizAnswered({ ...quizAnswered, [qIdx]: answer });
+    if (answer === story.quiz[qIdx].correct) onXp(5);
+  };
+
+  const addWord = (w) => {
+    if (addedWords.has(w.en)) return;
+    onAddFlashcard({ front: w.en, back: `${w.ipa} — ${w.vi}`, type: "vocab_story", tag: `vocab_${story.topic.toLowerCase()}` });
+    setAddedWords(new Set([...addedWords, w.en]));
+  };
+
+  // TAP-TO-EXPLORE: click vào từ/cụm → gọi AI giải thích
+  const explainText = async (text, isSentence = false) => {
+    const cleaned = text.replace(/[.,!?;:"']/g, "").trim();
+    if (!cleaned || cleaned.length < 1) return;
+    setPopup({ text: cleaned, loading: true, data: null, isSentence });
+    try {
+      // Check pre-defined vocabulary first (nhanh, không tốn API)
+      const known = story.vocabulary?.find(v => v.en.toLowerCase() === cleaned.toLowerCase());
+      if (known && !isSentence) {
+        setPopup({ text: cleaned, loading: false, isSentence: false, data: {
+          en: known.en, ipa: known.ipa, vi: known.vi, 
+          usage: known.usage_in_story, 
+          examples: [], fromVocab: true
+        }});
+        return;
+      }
+      // Gọi AI giải thích
+      const contextHint = `Trong câu chuyện: "${story.story.slice(0, 200)}..."`;
+      const prompt = isSentence
+        ? `Giải thích CỤM CÂU sau tiếng Anh cho học viên IELTS band ${profile.currentBand} (người Việt):
+"${cleaned}"
+${contextHint}
+
+Trả JSON:
+{
+  "en": "cụm câu gốc",
+  "ipa": "/phiên âm IPA của cả cụm (ngăn cách space)/",
+  "vi": "dịch tiếng Việt",
+  "grammar_note": "cấu trúc ngữ pháp chính (ngắn gọn tiếng Việt)",
+  "examples": ["1 ví dụ khác dùng cấu trúc/cụm này"],
+  "key_word": "từ quan trọng nhất trong cụm"
+}`
+        : `Giải thích TỪ sau cho học viên IELTS (người Việt):
+"${cleaned}"
+${contextHint}
+
+Trả JSON:
+{
+  "en": "từ gốc",
+  "ipa": "/phiên âm chính xác/",
+  "vi": "2-3 nghĩa tiếng Việt phổ biến, ngăn cách dấu phẩy",
+  "part_of_speech": "n/v/adj/adv/...",
+  "usage": "câu chứa từ này trong chuyện (nếu có)",
+  "examples": ["1-2 ví dụ khác với từ này"],
+  "synonyms": ["2-3 synonym phổ biến"],
+  "collocations": ["2 collocations hay dùng (VD: 'make a decision', 'take action')"]
+}`;
+      const r = await callGemini(apiKey, prompt, null, true);
+      const data = JSON.parse(r);
+      setPopup({ text: cleaned, loading: false, isSentence, data });
+    } catch(e) {
+      setPopup({ text: cleaned, loading: false, isSentence, data: { error: e.message } });
+    }
+  };
+
+  const addPopupToFlashcard = () => {
+    if (!popup?.data) return;
+    const d = popup.data;
+    const front = d.en || popup.text;
+    const back = `${d.ipa || ""} — ${d.vi || ""}${d.grammar_note ? " · " + d.grammar_note : ""}`;
+    onAddFlashcard({ front, back, type: popup.isSentence ? "phrase" : "vocab_tap", tag: `story_${story.topic.toLowerCase()}` });
+    setAddedWords(new Set([...addedWords, front]));
+    setPopup(null);
+  };
+
+  const checkRetell = async () => {
+    if (retellInput.trim().split(/\s+/).length < 20) { alert("Kể lại ít nhất 20 từ"); return; }
+    setRetellLoading(true);
+    try {
+      const r = await callGemini(apiKey,
+        `Học viên IELTS band ${profile.currentBand} kể lại câu chuyện sau bằng lời của mình. Chấm và feedback.
+
+CÂU CHUYỆN GỐC:
+${story.story}
+
+PHẦN KỂ LẠI CỦA HỌC VIÊN (${retellInput.trim().split(/\s+/).length} từ):
+${retellInput}
+
+Trả về JSON:
+{
+  "band_estimate": 5.5,
+  "content_score": 8,
+  "grammar_errors": [{"wrong":"câu sai","correct":"câu đúng","note":"giải thích ngắn tiếng Việt"}],
+  "good_phrases": ["cụm từ học viên dùng tốt"],
+  "missed_points": ["ý quan trọng học viên bỏ sót"],
+  "suggestions_vi": "2-3 gợi ý cải thiện bằng tiếng Việt"
+}`,
+        null, true);
+      setRetellFeedback(JSON.parse(r));
+      onXp(20);
+    } catch(e) { alert("Lỗi: " + e.message); }
+    setRetellLoading(false);
+  };
+
+  const newStory = () => {
+    setStory(null);
+    ls.set("currentStory", null);
+    setQuizAnswered({}); setRetellInput(""); setRetellFeedback(null); setAddedWords(new Set());
+    setView("selector");
+  };
+
+  const openFromLibrary = (s) => {
+    setStory(s);
+    ls.set("currentStory", s);
+    setQuizAnswered({}); setRetellInput(""); setRetellFeedback(null); setAddedWords(new Set());
+    setView("reader");
+  };
+
+  const deleteFromLibrary = (id) => {
+    if (!confirm("Xóa chuyện này khỏi thư viện?")) return;
+    const newLib = library.filter(s => s.id !== id);
+    setLibrary(newLib);
+    ls.set("storyLibrary", newLib);
+  };
+
+  // Render story with clickable sentences + words
+  // Chia text thành sentences, mỗi sentence thành words
+  const renderStory = (text) => {
+    if (!text) return null;
+    // Split thành paragraphs (bảo vệ hội thoại A:/B:)
+    const paragraphs = text.split(/\n+/).filter(p => p.trim());
+    return paragraphs.map((para, pIdx) => {
+      // Match sentences (ending . ! ?)
+      const sentenceRegex = /[^.!?]+[.!?]+|[^.!?]+$/g;
+      const sentences = para.match(sentenceRegex) || [para];
+      return (
+        <div key={pIdx} className="mb-3">
+          {sentences.map((sent, sIdx) => {
+            const trimmed = sent.trim();
+            if (!trimmed) return null;
+            // Tách từ, giữ dấu câu và space
+            const tokens = trimmed.split(/(\s+|[.,!?;:"])/g).filter(Boolean);
+            return (
+              <span key={sIdx} className="group relative inline">
+                <span className="hover:bg-blue-50 rounded px-0.5 transition-colors">
+                  {tokens.map((tok, tIdx) => {
+                    const isWord = /[a-zA-Z]/.test(tok);
+                    const cleaned = tok.replace(/[^a-zA-Z'-]/g, "");
+                    const isVocabWord = story.vocabulary?.some(v => v.en.toLowerCase() === cleaned.toLowerCase());
+                    if (!isWord) return <span key={tIdx}>{tok}</span>;
+                    return (
+                      <span key={tIdx} onClick={(e) => { e.stopPropagation(); explainText(cleaned, false); }}
+                        className={`cursor-pointer hover:bg-yellow-200 hover:underline rounded-sm transition-colors ${isVocabWord ? "bg-amber-200/60 font-medium" : ""}`}>
+                        {tok}
+                      </span>
+                    );
+                  })}
+                </span>
+                <button onClick={() => explainText(trimmed, true)} className="opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center ml-1 text-blue-600 hover:text-blue-800 text-xs align-super" title="Giải thích cả câu">
+                  🔍
+                </button>
+              </span>
+            );
+          })}
+        </div>
+      );
+    });
+  };
+
+  // LIBRARY VIEW
+  if (view === "library") {
+    return (
+      <div className="max-w-xl mx-auto px-6 pt-10 pb-24">
+        <button onClick={() => setView("selector")} className="mb-6 text-stone-500 flex items-center gap-1 text-sm"><Icon name="chevLeft" className="w-4 h-4" /> Tạo chuyện mới</button>
+        <h1 className="font-display text-4xl font-black mb-2">Thư viện chuyện</h1>
+        <p className="text-stone-500 text-sm mb-8">{library.length} chuyện đã lưu · tối đa 50</p>
+        {library.length === 0 ? (
+          <div className="text-center py-12 bg-white border border-stone-200 rounded-sm">
+            <div className="text-5xl mb-3">📚</div>
+            <p className="text-stone-600 font-display italic">Thư viện trống</p>
+            <button onClick={() => setView("selector")} className="mt-4 bg-stone-900 text-amber-50 px-6 py-2 rounded-sm text-sm">Tạo chuyện đầu tiên</button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {library.map(s => {
+              const typeInfo = STORY_TYPES.find(t => t.id === s.type);
+              return (
+                <div key={s.id} className="bg-white border border-stone-200 rounded-sm p-4 ink-shadow">
+                  <div className="flex items-start gap-3">
+                    {s.svg_illustration ? (
+                      <div className="w-16 h-16 flex-shrink-0 rounded-sm overflow-hidden" style={{background: `${typeInfo?.color || "#78716C"}15`}} dangerouslySetInnerHTML={{__html: s.svg_illustration}} />
+                    ) : (
+                      <div className="text-2xl flex-shrink-0">{s.image_emoji?.split(" ")[0] || typeInfo?.icon}</div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded uppercase tracking-widest text-white font-bold" style={{background: typeInfo?.color || "#78716C"}}>{typeInfo?.label}</span>
+                        <span className="text-[10px] text-stone-500">· {s.topic}</span>
+                        <span className="text-[10px] text-stone-400 ml-auto">{new Date(s.createdAt).toLocaleDateString("vi-VN")}</span>
+                      </div>
+                      <h3 className="font-display font-bold truncate">{s.title}</h3>
+                      <p className="text-xs text-stone-500 line-clamp-2 mt-1">{s.story.slice(0, 120)}...</p>
+                      <div className="flex gap-2 mt-3">
+                        <button onClick={() => openFromLibrary(s)} className="flex-1 bg-stone-900 text-amber-50 py-1.5 rounded-sm text-xs font-bold hover:bg-stone-800">Mở đọc</button>
+                        <button onClick={() => deleteFromLibrary(s.id)} className="px-3 py-1.5 text-xs text-stone-400 hover:text-rose-700">Xóa</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (!story && !loading) {
+    return (
+      <div className="max-w-xl mx-auto px-6 pt-10">
+        <button onClick={onBack} className="mb-6 text-stone-500 flex items-center gap-1 text-sm"><Icon name="chevLeft" className="w-4 h-4" /> Trang chính</button>
+        <div className="flex items-start justify-between mb-2">
+          <h1 className="font-display text-4xl font-black">Chuyện kể mỗi ngày</h1>
+          {library.length > 0 && (
+            <button onClick={() => setView("library")} className="text-xs uppercase tracking-widest text-stone-600 hover:text-stone-900 border border-stone-300 rounded-sm px-3 py-2 whitespace-nowrap">
+              📚 Thư viện ({library.length})
+            </button>
+          )}
+        </div>
+        <p className="text-stone-500 text-sm mb-8">Học từ vựng qua chuyện ngắn · Gemini 2.5 Pro</p>
+
+        <p className="text-xs uppercase tracking-widest text-stone-500 mb-2">Loại chuyện</p>
+        <div className="grid grid-cols-2 gap-2 mb-6">
+          {STORY_TYPES.map(s => (
+            <button key={s.id} onClick={() => setType(s.id)} className={`p-4 rounded-sm border-2 text-left transition-all ${type === s.id ? "text-amber-50 border-stone-900" : "bg-white border-stone-200 hover:border-stone-400"}`}
+              style={{ background: type === s.id ? s.color : undefined }}>
+              <div className="text-2xl mb-1">{s.icon}</div>
+              <div className="font-display font-bold text-sm">{s.label}</div>
+              <div className="text-xs opacity-70">{s.desc}</div>
+            </button>
+          ))}
+        </div>
+
+        <p className="text-xs uppercase tracking-widest text-stone-500 mb-2">Chủ đề IELTS</p>
+        <div className="grid grid-cols-3 gap-2">
+          {TOPICS.map(t => {
+            const existing = library.filter(s => s.type === type && s.topic === t).length;
+            return (
+              <button key={t} onClick={() => generate(t)} className="bg-white border border-stone-200 rounded-sm p-3 ink-shadow hover:border-stone-400 text-left relative">
+                <div className="font-display text-sm font-bold">{t}</div>
+                {existing > 0 && <div className="text-[10px] text-stone-500 mt-0.5">{existing} chuyện cũ</div>}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="max-w-xl mx-auto px-6 pt-10">
+        <button onClick={onBack} className="mb-6 text-stone-500 flex items-center gap-1 text-sm"><Icon name="chevLeft" className="w-4 h-4" /> Trang chính</button>
+        <div className="text-center py-16">
+          <Icon name="sparkle" className="w-12 h-12 text-amber-600 mx-auto mb-4 float-gentle" />
+          <p className="font-display italic text-stone-600">Cô đang soạn chuyện "{topic}"...</p>
+          <p className="text-xs text-stone-400 mt-2">Mất khoảng 20-40s</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-xl mx-auto px-6 pt-10 pb-32">
+      <div className="flex items-center justify-between mb-6">
+        <button onClick={onBack} className="text-stone-500 flex items-center gap-1 text-sm"><Icon name="chevLeft" className="w-4 h-4" /> Trang chính</button>
+        <button onClick={newStory} className="text-stone-400 hover:text-stone-900 text-xs underline">Chuyện mới</button>
+      </div>
+
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-xs px-2 py-0.5 rounded-sm uppercase tracking-widest text-white font-bold" style={{background: STORY_TYPES.find(t => t.id === story.type)?.color || "#78716C"}}>
+            {STORY_TYPES.find(t => t.id === story.type)?.icon} {STORY_TYPES.find(t => t.id === story.type)?.label}
+          </span>
+          <span className="text-xs text-stone-500">· {story.topic}</span>
+        </div>
+        <h1 className="font-display text-3xl font-black leading-tight">{story.title}</h1>
+      </div>
+
+      {/* Hero scene: SVG ưu tiên, fallback emoji */}
+      {(story.svg_illustration || story.image_emoji) && (
+        <div className="relative mb-4 rounded-sm overflow-hidden ink-shadow" style={{background: `linear-gradient(135deg, ${STORY_TYPES.find(t=>t.id===story.type)?.color || "#78716C"}22, ${STORY_TYPES.find(t=>t.id===story.type)?.color || "#78716C"}05)`}}>
+          {story.svg_illustration ? (
+            <div className="story-svg aspect-[2/1] flex items-center justify-center p-3" dangerouslySetInnerHTML={{__html: story.svg_illustration}} />
+          ) : (
+            <div className="aspect-[5/2] flex items-center justify-center text-center p-6">
+              <div>
+                <div className="text-7xl mb-2 tracking-wider">{story.image_emoji}</div>
+                {story.image_keywords && <p className="text-[10px] uppercase tracking-widest text-stone-500 italic">{story.image_keywords}</p>}
+              </div>
+            </div>
+          )}
+          {story.svg_illustration && story.image_keywords && (
+            <div className="absolute bottom-2 right-3 text-[10px] uppercase tracking-widest text-stone-500 italic bg-white/70 rounded px-2 py-0.5 backdrop-blur">{story.image_keywords}</div>
+          )}
+        </div>
+      )}
+
+      <div className="bg-blue-50 border border-blue-200 rounded-sm p-3 mb-3 text-xs text-blue-900">
+        💡 <b>Mẹo:</b> Chạm vào bất kỳ <u>từ</u> nào để xem phiên âm + nghĩa. Hover câu và bấm 🔍 để giải thích <u>cả câu</u>.
+      </div>
+
+      <div className="bg-white border border-stone-200 rounded-sm p-6 ink-shadow mb-4">
+        <button onClick={() => speak(story.story, 0.85)} className="mb-4 inline-flex items-center gap-2 text-stone-600 hover:text-stone-900 text-sm"><Icon name="volume" className="w-4 h-4" /> Nghe kể chuyện</button>
+        <div className="font-display text-lg leading-relaxed text-stone-800 select-text">
+          {renderStory(story.story)}
+        </div>
+      </div>
+
+      {/* TAP POPUP */}
+      {popup && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40" onClick={() => setPopup(null)}>
+          <div className="bg-white w-full sm:max-w-md rounded-t-xl sm:rounded-sm ink-shadow max-h-[85vh] overflow-y-auto slide-up" onClick={e => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white border-b border-stone-200 p-4 flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] uppercase tracking-widest text-stone-500 mb-1">{popup.isSentence ? "Cụm câu" : "Từ"}</p>
+                <div className="font-display text-2xl font-bold break-words">{popup.text}</div>
+              </div>
+              <button onClick={() => setPopup(null)} className="text-stone-400 hover:text-stone-900"><Icon name="x" className="w-5 h-5" /></button>
+            </div>
+            <div className="p-4">
+              {popup.loading && (
+                <div className="text-center py-6"><Icon name="sparkle" className="w-8 h-8 text-amber-600 mx-auto mb-2 float-gentle" /><p className="text-sm text-stone-500 italic">Đang giải thích...</p></div>
+              )}
+              {!popup.loading && popup.data?.error && (
+                <div className="bg-rose-50 p-3 rounded-sm text-sm text-rose-800">Lỗi: {popup.data.error}</div>
+              )}
+              {!popup.loading && popup.data && !popup.data.error && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => speak(popup.data.en || popup.text)} className="bg-stone-900 text-amber-50 px-4 py-2 rounded-sm text-sm flex items-center gap-2"><Icon name="volume" className="w-4 h-4" /> Nghe</button>
+                    {popup.data.ipa && <div className="font-mono text-amber-700">{popup.data.ipa}</div>}
+                    {popup.data.part_of_speech && <span className="text-[10px] uppercase px-1.5 py-0.5 rounded bg-stone-100 text-stone-600">{popup.data.part_of_speech}</span>}
+                  </div>
+                  {popup.data.vi && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-sm p-3">
+                      <p className="text-[10px] uppercase tracking-widest text-amber-700 font-bold mb-1">Nghĩa</p>
+                      <p className="text-stone-800">{popup.data.vi}</p>
+                    </div>
+                  )}
+                  {popup.data.grammar_note && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-sm p-3">
+                      <p className="text-[10px] uppercase tracking-widest text-blue-700 font-bold mb-1">Ngữ pháp</p>
+                      <p className="text-sm text-blue-900 italic">{popup.data.grammar_note}</p>
+                    </div>
+                  )}
+                  {popup.data.usage && !popup.data.fromVocab && (
+                    <div className="text-xs text-stone-500 italic border-l-2 border-stone-300 pl-3">Trong chuyện: "{popup.data.usage}"</div>
+                  )}
+                  {popup.data.examples?.length > 0 && (
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest text-stone-500 font-bold mb-1">Ví dụ</p>
+                      <ul className="text-sm space-y-1">
+                        {popup.data.examples.map((ex, i) => <li key={i} className="italic text-stone-700 flex items-start gap-2">"{ex}" <button onClick={() => speak(ex)} className="text-stone-400 hover:text-stone-700 flex-shrink-0"><Icon name="volume" className="w-3 h-3" /></button></li>)}
+                      </ul>
+                    </div>
+                  )}
+                  {popup.data.synonyms?.length > 0 && (
+                    <div className="text-sm"><span className="text-[10px] uppercase tracking-widest text-stone-500 font-bold">Synonyms: </span><span className="text-stone-700">{popup.data.synonyms.join(", ")}</span></div>
+                  )}
+                  {popup.data.collocations?.length > 0 && (
+                    <div className="text-sm"><span className="text-[10px] uppercase tracking-widest text-stone-500 font-bold">Collocations: </span><span className="text-stone-700 italic">{popup.data.collocations.join(" · ")}</span></div>
+                  )}
+                </div>
+              )}
+            </div>
+            {!popup.loading && popup.data && !popup.data.error && (
+              <div className="sticky bottom-0 bg-white border-t border-stone-200 p-3">
+                <button onClick={addPopupToFlashcard} className="w-full bg-amber-700 text-amber-50 py-2.5 rounded-sm font-bold text-sm hover:bg-amber-800">+ Thêm vào Flashcards</button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <details className="mb-4 bg-stone-50 border border-stone-200 rounded-sm">
+        <summary className="cursor-pointer p-4 font-display font-bold text-sm select-none hover:bg-stone-100">📖 Xem bản dịch tiếng Việt</summary>
+        <div className="px-4 pb-4 text-stone-700 italic leading-relaxed" style={{whiteSpace: "pre-wrap"}}>{story.story_vi}</div>
+      </details>
+
+      {story.punchline_explanation && (story.type === "funny" || story.type === "dialogue") && (
+        <details className="mb-4 bg-amber-50 border border-amber-200 rounded-sm">
+          <summary className="cursor-pointer p-4 font-display font-bold text-sm select-none text-amber-900 hover:bg-amber-100">💡 Giải thích điểm hài</summary>
+          <div className="px-4 pb-4 text-amber-900 italic leading-relaxed">{story.punchline_explanation}</div>
+        </details>
+      )}
+
+      <div className="mb-6">
+        <h3 className="font-display text-xl font-bold mb-3">Từ vựng trong chuyện</h3>
+        <div className="space-y-2">
+          {story.vocabulary?.map((w, i) => {
+            const added = addedWords.has(w.en);
+            return (
+              <div key={i} className="bg-white border border-stone-200 rounded-sm p-3 ink-shadow">
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <div className="flex-1">
+                    <div className="flex items-baseline gap-2 flex-wrap">
+                      <span className="font-display font-black text-lg">{w.en}</span>
+                      <span className="font-mono text-amber-700 text-sm">{w.ipa}</span>
+                      <button onClick={() => speak(w.en)} className="text-stone-400 hover:text-stone-700"><Icon name="volume" className="w-3 h-3" /></button>
+                    </div>
+                    <div className="text-sm text-stone-700">{w.vi}</div>
+                    {w.usage_in_story && <div className="text-xs text-stone-500 italic mt-1">"{w.usage_in_story}"</div>}
+                  </div>
+                  <button onClick={() => addWord(w)} disabled={added} className={`text-xs px-2 py-1 rounded-sm border whitespace-nowrap ${added ? "bg-emerald-50 border-emerald-300 text-emerald-700" : "bg-white border-stone-300 hover:border-stone-600"}`}>
+                    {added ? "✓ Đã thêm" : "+ Flashcard"}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {story.quiz?.length > 0 && (
+        <div className="mb-6">
+          <h3 className="font-display text-xl font-bold mb-3">Bài tập hiểu bài</h3>
+          <div className="space-y-4">
+            {story.quiz.map((q, qIdx) => {
+              const userAns = quizAnswered[qIdx];
+              const isAnswered = !!userAns;
+              return (
+                <div key={qIdx} className="bg-white border border-stone-200 rounded-sm p-4 ink-shadow">
+                  <p className="font-display font-bold mb-3">{qIdx + 1}. {q.question}</p>
+                  <div className="space-y-2">
+                    {q.options.map((opt, oIdx) => {
+                      const letter = String.fromCharCode(65 + oIdx);
+                      const isSel = userAns === letter;
+                      const isRight = isAnswered && letter === q.correct;
+                      const isWrong = isAnswered && isSel && !isRight;
+                      return (
+                        <button key={oIdx} onClick={() => checkQuiz(qIdx, letter)} disabled={isAnswered} className={`w-full p-3 rounded-sm text-left text-sm border-2 transition-all ${
+                          isRight ? "bg-emerald-600 text-white border-emerald-700" :
+                          isWrong ? "bg-rose-100 text-rose-900 border-rose-600" :
+                          isSel ? "bg-stone-800 text-white" :
+                          "bg-white border-stone-200 hover:border-stone-400"
+                        }`}>
+                          <span className="font-bold mr-2">{letter}.</span>{opt}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {isAnswered && q.explanation_vi && (
+                    <div className="mt-2 text-xs text-stone-600 italic pt-2 border-t border-stone-200">💡 {q.explanation_vi}</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="mb-6">
+        <h3 className="font-display text-xl font-bold mb-2">Kể lại bằng lời của bạn</h3>
+        <p className="text-xs text-stone-500 mb-3 italic">Luyện Speaking Part 2 "Describe a time..." — AI chấm</p>
+        <textarea value={retellInput} onChange={e => setRetellInput(e.target.value)} placeholder="Retell the story in your own words..." disabled={!!retellFeedback} className="w-full min-h-[120px] p-3 border border-stone-300 rounded-sm text-sm focus:outline-none focus:border-stone-700 disabled:bg-stone-50" />
+        <div className="flex items-center justify-between mt-2">
+          <span className="text-xs text-stone-500">{retellInput.trim().split(/\s+/).filter(Boolean).length} từ</span>
+          {!retellFeedback && <button onClick={checkRetell} disabled={retellLoading || retellInput.trim().split(/\s+/).length < 20} className="bg-stone-900 text-amber-50 px-4 py-2 rounded-sm text-sm font-bold disabled:opacity-50">
+            {retellLoading ? "Đang chấm..." : "Nhờ cô chấm"}
+          </button>}
+        </div>
+        
+        {retellFeedback && (
+          <div className="mt-4 space-y-3 slide-up">
+            <div className="bg-stone-900 text-amber-50 p-4 rounded-sm text-center">
+              <p className="text-xs uppercase tracking-widest text-amber-400/70">Band ước tính cho phần kể lại</p>
+              <div className="font-display text-4xl font-black">{retellFeedback.band_estimate}</div>
+            </div>
+            {retellFeedback.good_phrases?.length > 0 && (
+              <div className="bg-emerald-50 border border-emerald-200 rounded-sm p-3">
+                <p className="text-xs uppercase tracking-widest text-emerald-800 font-bold mb-1">Cụm dùng tốt</p>
+                <div className="text-sm text-emerald-900 italic">{retellFeedback.good_phrases.map(p => `"${p}"`).join(", ")}</div>
+              </div>
+            )}
+            {retellFeedback.grammar_errors?.length > 0 && (
+              <div className="bg-rose-50 border border-rose-200 rounded-sm p-3">
+                <p className="text-xs uppercase tracking-widest text-rose-800 font-bold mb-2">Lỗi cần sửa</p>
+                <div className="space-y-2">
+                  {retellFeedback.grammar_errors.map((e, i) => (
+                    <div key={i} className="text-sm">
+                      <div><s className="text-rose-700">{e.wrong}</s> → <b className="text-emerald-700">{e.correct}</b></div>
+                      <div className="text-xs text-stone-600 italic">{e.note}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {retellFeedback.missed_points?.length > 0 && (
+              <div className="bg-amber-50 border border-amber-200 rounded-sm p-3">
+                <p className="text-xs uppercase tracking-widest text-amber-800 font-bold mb-1">Ý bị bỏ sót</p>
+                <ul className="text-sm text-amber-900 list-disc list-inside">
+                  {retellFeedback.missed_points.map((p, i) => <li key={i}>{p}</li>)}
+                </ul>
+              </div>
+            )}
+            {retellFeedback.suggestions_vi && (
+              <div className="bg-blue-50 border border-blue-200 rounded-sm p-3">
+                <p className="text-xs uppercase tracking-widest text-blue-800 font-bold mb-1">Gợi ý từ cô</p>
+                <p className="text-sm text-blue-900 font-display italic" style={{whiteSpace:"pre-wrap"}}>{retellFeedback.suggestions_vi}</p>
+              </div>
+            )}
+            <button onClick={() => { setRetellFeedback(null); setRetellInput(""); }} className="w-full bg-white border border-stone-300 py-2 rounded-sm text-sm hover:border-stone-500">Kể lại lần nữa</button>
+          </div>
+        )}
+      </div>
+
+      <button onClick={newStory} className="w-full bg-stone-900 text-amber-50 py-3 rounded-sm font-display font-bold hover:bg-stone-800">Chuyện mới</button>
+    </div>
+  );
+}
+
+// ============ STATS ============
+function StatsScreen({ profile, flashcards, onBack }) {
+  const totalLessons = CURRICULUM.reduce((s,u) => s + u.lessons.length, 0);
+  const done = Object.keys(profile.completedLessons).length;
+  const byBand = CURRICULUM.filter(u => u.lessons.length > 0).map(u => ({
+    band: u.band, total: u.lessons.length,
+    done: u.lessons.filter(l => profile.completedLessons[l.id]).length, color: u.color
+  }));
+  return (
+    <div className="max-w-xl mx-auto px-6 pt-10">
+      <button onClick={onBack} className="mb-6 text-stone-500 flex items-center gap-1 text-sm"><Icon name="chevLeft" className="w-4 h-4" /> Trang chính</button>
+      <h1 className="font-display text-4xl font-black mb-10">Thống kê</h1>
+      <div className="grid grid-cols-2 gap-3 mb-8">
+        <div className="bg-white border border-stone-200 rounded-sm p-4 ink-shadow"><Icon name="star" className="w-5 h-5 text-emerald-700 mb-2" /><div className="font-display text-3xl font-black">{profile.xp}</div><div className="text-xs text-stone-500 uppercase">Tổng XP</div></div>
+        <div className="bg-white border border-stone-200 rounded-sm p-4 ink-shadow"><Icon name="flame" className="w-5 h-5 text-amber-600 mb-2" /><div className="font-display text-3xl font-black">{profile.streak} ngày</div><div className="text-xs text-stone-500 uppercase">Streak</div></div>
+        <div className="bg-white border border-stone-200 rounded-sm p-4 ink-shadow"><Icon name="check" className="w-5 h-5 text-stone-600 mb-2" /><div className="font-display text-3xl font-black">{done}</div><div className="text-xs text-stone-500 uppercase">Bài xong</div></div>
+        <div className="bg-white border border-stone-200 rounded-sm p-4 ink-shadow"><Icon name="layers" className="w-5 h-5 text-stone-600 mb-2" /><div className="font-display text-3xl font-black">{flashcards.length}</div><div className="text-xs text-stone-500 uppercase">Flashcards</div></div>
+      </div>
+      <h2 className="font-display text-2xl font-bold mb-4">Theo band</h2>
+      <div className="space-y-3">
+        {byBand.map(b => (
+          <div key={b.band} className="bg-white border border-stone-200 rounded-sm p-4 ink-shadow">
+            <div className="flex justify-between mb-2"><span className="font-display font-bold">Band {b.band}</span><span className="text-sm text-stone-600">{b.done}/{b.total}</span></div>
+            <div className="h-2 bg-stone-100 rounded-full overflow-hidden"><div className="h-full transition-all" style={{width:`${b.total?(b.done/b.total)*100:0}%`, background:b.color}} /></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ============ SETTINGS ============
+function SettingsScreen({ apiKey, onSaveKey, profile, onSaveProfile, onBack }) {
+  const [key, setKey] = useState(apiKey);
+  const [band, setBand] = useState(profile.currentBand);
+  return (
+    <div className="max-w-xl mx-auto px-6 pt-10">
+      <button onClick={onBack} className="mb-6 text-stone-500 flex items-center gap-1 text-sm"><Icon name="chevLeft" className="w-4 h-4" /> Trang chính</button>
+      <h1 className="font-display text-4xl font-black mb-8">Cài đặt</h1>
+      <div className="bg-white border border-stone-200 rounded-sm p-5 ink-shadow mb-4">
+        <label className="text-xs tracking-widest uppercase text-stone-500">Gemini API Key</label>
+        <input type="password" value={key} onChange={e => setKey(e.target.value)} className="w-full px-3 py-2 border border-stone-300 rounded-sm font-mono text-sm mt-2 mb-2" />
+        <button onClick={() => { onSaveKey(key); alert("Đã lưu"); }} className="bg-stone-900 text-amber-50 px-4 py-2 rounded-sm text-sm">Lưu</button>
+      </div>
+      <div className="bg-white border border-stone-200 rounded-sm p-5 ink-shadow mb-4">
+        <label className="text-xs tracking-widest uppercase text-stone-500">Band hiện tại (để AI điều chỉnh độ khó)</label>
+        <div className="flex gap-2 mt-2 flex-wrap">
+          {["3.0","3.5","4.0","4.5","5.0","5.5","6.0","6.5","7.0"].map(b => (
+            <button key={b} onClick={() => { setBand(b); onSaveProfile({currentBand:b}); }} className={`px-3 py-2 rounded-sm text-sm ${band===b?"bg-stone-900 text-amber-50":"bg-stone-100 hover:bg-stone-200"}`}>{b}</button>
+          ))}
+        </div>
+      </div>
+      <div className="bg-rose-50 border border-rose-200 rounded-sm p-5">
+        <h3 className="font-display font-bold text-rose-900 mb-2">Xóa dữ liệu</h3>
+        <p className="text-sm text-rose-900 mb-3">Xóa toàn bộ tiến độ học, flashcards, lịch sử chat.</p>
+        <button onClick={() => { if (confirm("Chắc chắn xóa hết?")) { localStorage.clear(); location.reload(); } }} className="bg-rose-700 text-white px-4 py-2 rounded-sm text-sm">Xóa tất cả</button>
+      </div>
+    </div>
+  );
+}
+
+// ============ BOTTOM NAV ============
+function BottomNav({ screen, setScreen, due }) {
+  if (["lesson","complete","setup"].includes(screen)) return null;
+  const items = [
+    { id:"home", icon:"home", label:"Chính" },
+    { id:"map", icon:"layers", label:"Bài học" },
+    { id:"chat", icon:"chat", label:"Chat" },
+    { id:"review", icon:"rotate", label:"Ôn", badge: due },
+    { id:"stats", icon:"bar", label:"Tiến độ" },
+  ];
+  return (
+    <div className="fixed bottom-0 left-0 right-0 bg-stone-50/95 backdrop-blur border-t border-stone-300 z-10">
+      <div className="max-w-xl mx-auto grid grid-cols-5">
+        {items.map(i => {
+          const active = screen === i.id;
+          return (
+            <button key={i.id} onClick={() => setScreen(i.id)} className={`py-3 flex flex-col items-center gap-0.5 relative ${active?"text-stone-900":"text-stone-400 hover:text-stone-700"}`}>
+              <Icon name={i.icon} className="w-5 h-5" />
+              <span className={`text-[10px] tracking-wider uppercase ${active?"font-bold":""}`}>{i.label}</span>
+              {i.badge > 0 && <span className="absolute top-2 right-1/4 bg-amber-700 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">{i.badge}</span>}
+              {active && <div className="absolute top-0 left-1/4 right-1/4 h-0.5 bg-stone-900" />}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ============ MOUNT ============
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
